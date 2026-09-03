@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Switi Sranan - Surinaams Eten Bestellen</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f9f6f0; color: #333; line-height: 1.6; }
+        header { background-color: #d84315; color: white; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 1.8rem; font-weight: bold; }
+        .hero { background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80'); background-size: cover; background-position: center; color: white; text-align: center; padding: 3rem 1rem; }
+        
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; }
+        .dish-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: space-between; }
+        .dish-info { padding: 1.2rem; }
+        .dish-title { font-size: 1.2rem; color: #2e7d32; font-weight: bold; }
+        .dish-price { font-weight: bold; color: #d84315; font-size: 1.1rem; margin: 0.3rem 0; }
+        .dish-desc { font-size: 0.85rem; color: #666; margin-bottom: 1rem; }
+        .btn-add { width: 100%; background-color: #2e7d32; color: white; border: none; padding: 0.7rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
+        .cart-section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); height: fit-content; }
+        .cart-title { font-size: 1.4rem; border-bottom: 2px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+        .cart-item-controls button { background: #eee; border: none; width: 24px; height: 24px; border-radius: 3px; cursor: pointer; }
+        .cart-total { border-top: 2px solid #eee; padding-top: 1rem; margin-top: 1rem; font-size: 1.2rem; font-weight: bold; display: flex; justify-content: space-between; }
+        
+        .form-group { margin-top: 1rem; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 0.3rem; }
+        .form-group input, .form-group select { width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
+        
+        .btn-order { width: 100%; background-color: #d84315; color: white; border: none; padding: 0.9rem; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold; margin-top: 1.5rem; }
+        .btn-order:disabled { background-color: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">🇸🇷 Switi Sranan</div>
+        <div id="cart-count">🛒 Winkelmandje (0)</div>
+    </header>
+
+    <section class="hero">
+        <h1>Authentiek Surinaams Genieten</h1>
+        <p>Bestel direct online en betaal via iDEAL.</p>
+    </section>
+
+    <div class="container">
+        <main>
+            <h2 style="margin-bottom: 1.5rem;">Ons Menu</h2>
+            <div class="menu-grid" id="menu-container"></div>
+        </main>
+
+        <aside class="cart-section">
+            <h2 class="cart-title">Jouw Bestelling</h2>
+            <div id="cart-items">
+                <p style="color: #888;">Je winkelmandje is leeg.</p>
+            </div>
+            <div class="cart-total">
+                <span>Totaal:</span>
+                <span id="cart-total-price">€ 0,00</span>
+            </div>
+
+            <!-- Bestel- en Adresformulier -->
+            <form id="checkout-form" action="https://formsubmit.co/rickyoung1997@gmail.com" method="POST" onsubmit="return validateOrder(event)">
+                <!-- FormSubmit instellingen -->
+                <input type="hidden" name="_subject" value="Nieuwe Bestelling - Switi Sranan">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="Bestelling_Overzicht" id="hidden-order-details">
+                <input type="hidden" name="Totaalbedrag" id="hidden-total-price">
+
+                <div class="form-group">
+                    <label for="naam">Naam *</label>
+                    <input type="text" id="naam" name="Klant_Naam" required placeholder="Bijv. Soema">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">E-mailadres *</label>
+                    <input type="email" id="email" name="Klant_Email" required placeholder="naam@voorbeeld.nl">
+                </div>
+
+                <div class="form-group">
+                    <label for="telefoon">Telefoonnummer *</label>
+                    <input type="tel" id="telefoon" name="Klant_Telefoon" required placeholder="0612345678">
+                </div>
+
+                <div class="form-group">
+                    <label for="adres">Straat & Huisnummer *</label>
+                    <input type="text" id="adres" name="Klant_Adres" required placeholder="Kerkstraat 12A">
+                </div>
+
+                <div class="form-group">
+                    <label for="postcode">Postcode & Plaats *</label>
+                    <input type="text" id="postcode" name="Klant_Postcode_Plaats" required placeholder="1234 AB Amsterdam">
+                </div>
+
+                <div class="form-group">
+                    <label for="bank">Betaal via iDEAL (Kies je bank) *</label>
+                    <select id="bank" name="Gekozen_Bank" required>
+                        <option value="">-- Selecteer bank --</option>
+                        <option value="ING">ING</option>
+                        <option value="Rabobank">Rabobank</option>
+                        <option value="ABN AMRO">ABN AMRO</option>
+                        <option value="SNS Bank">SNS Bank</option>
+                        <option value="ASN Bank">ASN Bank</option>
+                        <option value="RegioBank">RegioBank</option>
+                        <option value="Triodos Bank">Triodos Bank</option>
+                        <option value="Bunq">Bunq</option>
+                        <option value="Revolut">Revolut</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-order" id="submit-btn" disabled>Bestellen & Betalen via iDEAL</button>
+            </form>
+        </aside>
+    </div>
+
+    <script>
+        const menuDishes = [
+            { id: 1, name: "Roti Kip Special", price: 12.50, desc: "Met malse kip, aardappel, kouseband en een gekookt ei." },
+            { id: 2, name: "Broodje Pom", price: 4.50, desc: "Vers Surinaams pistoletje rijk gevuld met kruidige pom." },
+            { id: 3, name: "Broodje Bakkeljauw", price: 4.50, desc: "Knapperig broodje gevuld met pittig gekruide vis." },
+            { id: 4, name: "Saoto Soep", price: 7.50, desc: "Rijke Surinaams-Javaanse kippensoep met taugé, ei en chips." },
+            { id: 5, name: "Moksi Meti Nasi", price: 13.50, desc: "Geroosterd varkensvlees, kip en fa chong op gekruide nasi." },
+            { id: 6, name: "Telo met Bakkeljauw", price: 9.00, desc: "Krokant gebakken cassave met pittige bakkeljauw." },
+            { id: 7, name: "Bami Paramaribo", price: 11.00, desc: "Surinaamse bami met ketjapkip en zuurgoed van komkommer." },
+            { id: 8, name: "Dawet", price: 3.50, desc: "Verfrissende kokos-sodadrank met pinda-essence." }
+        ];
+
+        let cart = {};
+
+        function renderMenu() {
+            const container = document.getElementById('menu-container');
+            container.innerHTML = menuDishes.map(dish => `
+                <div class="dish-card">
+                    <div class="dish-info">
+                        <div class="dish-title">${dish.name}</div>
+                        <div class="dish-price">€ ${dish.price.toFixed(2).replace('.', ',')}</div>
+                        <div class="dish-desc">${dish.desc}</div>
+                    </div>
+                    <div style="padding: 0 1.2rem 1.2rem 1.2rem;">
+                        <button class="btn-add" onclick="addToCart(${dish.id})">+ Toevoegen</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(id) {
+            cart[id] = (cart[id] || 0) + 1;
+            updateCartUI();
+        }
+
+        function changeQuantity(id, delta) {
+            if (cart[id]) {
+                cart[id] += delta;
+                if (cart[id] <= 0) delete cart[id];
+            }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            const totalElement = document.getElementById('cart-total-price');
+            const cartCountElement = document.getElementById('cart-count');
+            const submitBtn = document.getElementById('submit-btn');
+
+            const itemIds = Object.keys(cart);
+            let total = 0;
+            let itemCount = 0;
+            let summaryString = "";
+
+            if (itemIds.length === 0) {
+                cartItemsContainer.innerHTML = '<p style="color: #888;">Je winkelmandje is leeg.</p>';
+                submitBtn.disabled = true;
+            } else {
+                cartItemsContainer.innerHTML = itemIds.map(id => {
+                    const dish = menuDishes.find(d => d.id == id);
+                    const qty = cart[id];
+                    const itemTotal = dish.price * qty;
+                    total += itemTotal;
+                    itemCount += qty;
+
+                    summaryString += `${qty}x ${dish.name} (€${itemTotal.toFixed(2)}), `;
+
+                    return `
+                        <div class="cart-item">
+                            <div>
+                                <strong>${dish.name}</strong><br>
+                                <small>€ ${dish.price.toFixed(2).replace('.', ',')}</small>
+                            </div>
+                            <div class="cart-item-controls">
+                                <button type="button" onclick="changeQuantity(${id}, -1)">-</button>
+                                <span style="margin: 0 5px;">${qty}</span>
+                                <button type="button" onclick="changeQuantity(${id}, 1)">+</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                submitBtn.disabled = false;
+            }
+
+            const formattedTotal = `€ ${total.toFixed(2).replace('.', ',')}`;
+            totalElement.textContent = formattedTotal;
+            cartCountElement.textContent = `🛒 Winkelmandje (${itemCount})`;
+
+            document.getElementById('hidden-order-details').value = summaryString;
+            document.getElementById('hidden-total-price').value = formattedTotal;
+        }
+
+        function validateOrder(e) {
+            if (Object.keys(cart).length === 0) {
+                alert("Voeg eerst gerechten toe aan je winkelmandje.");
+                e.preventDefault();
+                return false;
+            }
+            return true;
+        }
+
+        renderMenu();
+    </script>
+</body>
+</html>
