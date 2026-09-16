@@ -126,6 +126,15 @@ details.control-section summary::after {
 details.control-section[open] summary::after {
   transform: rotate(90deg);
 }
+
+/* Option 1 altijd open & niet-inklapaar styling */
+details.always-open summary {
+  cursor: default;
+}
+details.always-open summary::after {
+  display: none;
+}
+
 details.control-section .section-content {
   padding: 0 16px 14px 16px;
 }
@@ -185,13 +194,20 @@ input[type="checkbox"]{accent-color:var(--accent);width:18px;height:18px}
 .badge.warn{color:#f5d18b;border-color:rgba(241,183,74,.3)}
 .badge.danger{color:#ffabab;border-color:rgba(239,106,106,.3)}
 
+/* Dropzone Styling & Geladen Status */
 .dropzone{
   border:1.5px dashed #45556f;border-radius:14px;padding:18px 14px;text-align:center;
-  background:rgba(255,255,255,.015);transition:.15s
+  background:rgba(255,255,255,.015);transition:.2s ease;cursor:pointer;
 }
 .dropzone.dragover{border-color:var(--accent);background:rgba(217,164,65,.07)}
+.dropzone.loaded {
+  border-color: var(--ok);
+  background: rgba(65, 197, 138, 0.08);
+}
 .dropzone strong{display:block;margin-bottom:4px}
 .dropzone small{color:var(--muted)}
+.dropzone.loaded strong { color: #9de7c6; }
+.dropzone.loaded small { color: #a1b8d0; }
 #fileInput {display:none}
 
 .main{min-width:0}
@@ -292,12 +308,13 @@ tbody tr.hidden{display:none}
       <aside class="panel">
         <div class="panel-header">Import-instellingen</div>
 
-        <details class="control-section">
-          <summary>Option 1 · Oorspronkelijk Meetbestand</summary>
+        <!-- Option 1 is nu altijd open en kan niet worden ingeklapt -->
+        <details class="control-section always-open" open id="opt1Details">
+          <summary onclick="return false;">Option 1 · Oorspronkelijk Meetbestand</summary>
           <div class="section-content">
             <div id="dropzone" class="dropzone" tabindex="0">
-              <strong>Sleep hier je hoofd-meetbestand heen</strong>
-              <small>of tik om .txt, .csv, .asc of data te kiezen</small>
+              <strong id="dropzoneTitle">Sleep hier je hoofd-meetbestand heen</strong>
+              <small id="dropzoneSub">of tik om .txt, .csv, .asc of data te kiezen</small>
               <input id="fileInput" type="file" accept=".txt,.csv,.asc,.dat,.log,.prn,text/plain,text/csv">
             </div>
           </div>
@@ -615,6 +632,8 @@ function toggleQuickFilter(code) {
 
   const els = {
     dropzone: $("dropzone"),
+    dropzoneTitle: $("dropzoneTitle"),
+    dropzoneSub: $("dropzoneSub"),
     fileInput: $("fileInput"),
     importDelimiter: $("importDelimiter"),
     exportName: $("exportName"),
@@ -664,11 +683,9 @@ function toggleQuickFilter(code) {
     return new RegExp(regexString, 'i');
   }
 
-  // Verbeterde Wildcard Matching die ZOWEL puntnummer als code checkt
   function matchPointOrCodePattern(pointNoValue, codeValue, filterInput) {
     if (!filterInput) return true;
     
-    // Splits op komma's
     const rawPatterns = filterInput.split(',').map(s => s.trim()).filter(s => s.length > 0);
     if (!rawPatterns.length) return true;
 
@@ -677,7 +694,6 @@ function toggleQuickFilter(code) {
 
     return rawPatterns.some(pattern => {
       let p = pattern;
-      // Als er geen explicit wildcard is meegegeven, voeg * toe rondom
       if (!p.includes('*') && !p.includes('?')) {
         p = '*' + p + '*';
       }
@@ -689,6 +705,18 @@ function toggleQuickFilter(code) {
   function setStatus(text, kind="") {
     els.statusText.textContent = text;
     els.statusDot.className = "dot" + (kind ? " " + kind : "");
+  }
+
+  function updateDropzoneUI() {
+    if (state.fileName && state.points.length > 0) {
+      els.dropzone.classList.add("loaded");
+      els.dropzoneTitle.textContent = `✓ Geladen: ${state.fileName}`;
+      els.dropzoneSub.textContent = `${state.points.length} punten succesvol verwerkt (klik om te wijzigen)`;
+    } else {
+      els.dropzone.classList.remove("loaded");
+      els.dropzoneTitle.textContent = "Sleep hier je hoofd-meetbestand heen";
+      els.dropzoneSub.textContent = "of tik om .txt, .csv, .asc of data te kiezen";
+    }
   }
 
   function delimiterChar(value) {
@@ -1141,6 +1169,7 @@ function toggleQuickFilter(code) {
     updateMap();
     updateHeaderCheckbox();
     updateFileMeta();
+    updateDropzoneUI();
   }
 
   function formatNumber(v) {
@@ -1166,7 +1195,6 @@ function toggleQuickFilter(code) {
     renderSelectionOnly();
   }
 
-  // RD (Rijksdriehoeksstelsel) naar WGS84 Transformatie
   function rdToWgs84(x, y) {
     if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
 
@@ -1205,9 +1233,8 @@ function toggleQuickFilter(code) {
     return {lat, lon};
   }
 
-  // Google Maps Initialisatie
   function initMap() {
-    const defaultLocation = { lat: 52.15517, lng: 5.3872 }; // Amersfoort RD Oorsprong
+    const defaultLocation = { lat: 52.15517, lng: 5.3872 };
     state.map = new google.maps.Map(document.getElementById("map"), {
       zoom: 9,
       center: defaultLocation,
@@ -1218,7 +1245,6 @@ function toggleQuickFilter(code) {
     });
   }
 
-  // Update Google Maps markers op basis van geselecteerde punten
   function updateMap() {
     if (!state.map) {
       if (window.google && window.google.maps) {
@@ -1228,7 +1254,6 @@ function toggleQuickFilter(code) {
       }
     }
 
-    // Oude markers verwijderen
     if (state.gMarkers) {
       state.gMarkers.forEach(m => m.setMap(null));
     }
@@ -1251,7 +1276,6 @@ function toggleQuickFilter(code) {
       const isDup = p.duplicateNumber || p.duplicateXY;
       const markerColor = isDup ? "#ef6a6a" : "#d9a441";
 
-      // Dynamische SVG Marker Icon
       const markerSvg = {
         path: google.maps.SymbolPath.CIRCLE,
         fillColor: markerColor,
@@ -1295,7 +1319,6 @@ function toggleQuickFilter(code) {
 
     if (hasValidPoints) {
       state.map.fitBounds(bounds);
-      // Voorkom te ver inzoomen als er slechts 1 punt is
       if (selectedPoints.length === 1) {
         state.map.setZoom(16);
       }
@@ -1304,7 +1327,6 @@ function toggleQuickFilter(code) {
 
   window.updateMap = updateMap;
 
-  // Export Functionaliteiten
   function downloadFile(filename, text, mimeType="text/plain") {
     const blob = new Blob([text], { type: mimeType + ";charset=utf-8;" });
     const link = document.createElement("a");
@@ -1390,7 +1412,6 @@ function toggleQuickFilter(code) {
     downloadFile(fileName, kml, "application/vnd.google-earth.kml+xml");
   }
 
-  // Event Listeners Event Binding
   function setupEvents() {
     els.dropzone.addEventListener("click", () => els.fileInput.click());
     els.fileInput.addEventListener("change", e => handleFile(e.target.files[0]));
@@ -1461,7 +1482,6 @@ function toggleQuickFilter(code) {
     if (els.exportKmlBtnAlt) els.exportKmlBtnAlt.addEventListener("click", () => exportKml(true));
   }
 
-  // Initialisatie bij laden
   document.addEventListener("DOMContentLoaded", () => {
     setupEvents();
   });
