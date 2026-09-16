@@ -492,6 +492,7 @@ tbody tr.hidden{display:none}
           </select>
         </div>
 
+        <!-- Export opties staan netjes onderaan -->
         <div class="row wrap" style="margin-top:16px">
           <button id="exportTxtBtn" class="btn ok">Exporteer Geselecteerde TXT</button>
           <button id="exportKmlBtn" class="btn primary">Exporteer Geselecteerde KML</button>
@@ -545,7 +546,6 @@ function openTab(tabId) {
     codeFilterApplied: false,
     duplicatesScanned: false,
     map: null,
-    markers: new Map(),
     markerLayer: null
   };
 
@@ -1052,6 +1052,14 @@ function openTab(tabId) {
     }
   }
 
+  function updateFileMeta() {
+    if (!state.fileName) {
+      els.fileMeta.textContent = "Geen bestand geladen.";
+      return;
+    }
+    els.fileMeta.textContent = `Bestand: ${state.fileName} | ${state.points.length} punten verwerkt.`;
+  }
+
   function renderAll() {
     renderTable();
     updateStats();
@@ -1137,277 +1145,192 @@ function openTab(tabId) {
   function updateMap() {
     if (!state.map || !state.markerLayer) return;
     state.markerLayer.clearLayers();
-    state.markers.clear();
 
-    const selected = state.points.filter(p => state.selected.has(p.id));
     const bounds = [];
+    const selectedPoints = state.points.filter(p => state.selected.has(p.id));
 
-    selected.forEach(p => {
-      const ll = rdToWgs84(p.x, p.y);
-      if (!ll || !Number.isFinite(ll.lat) || !Number.isFinite(ll.lon)) return;
+    selectedPoints.forEach(p => {
+      const coords = rdToWgs84(p.x, p.y);
+      if (!coords) return;
 
-      const dup = p.duplicateNumber || p.duplicateXY;
-      
-      // Custom HTML Marker met een opvallend goudgeel label + speldenknop
-      const labelText = p.code ? `${p.pointNo} (${p.code})` : p.pointNo;
+      const isDup = p.duplicateNumber || p.duplicateXY;
       const customIcon = L.divIcon({
-        className: `custom-map-marker ${dup ? 'duplicate' : ''}`,
+        className: 'custom-map-marker-container',
         html: `
-          <div class="marker-label">${escapeHtml(labelText)}</div>
-          <div class="marker-pin"></div>
+          <div class="custom-map-marker ${isDup ? 'duplicate' : ''}">
+            <div class="marker-label">${p.pointNo}</div>
+            <div class="marker-pin"></div>
+          </div>
         `,
-        iconSize: [80, 42],
-        iconAnchor: [40, 36]
+        iconSize: [60, 30],
+        iconAnchor: [30, 28]
       });
 
-      const marker = L.marker([ll.lat, ll.lon], { icon: customIcon });
+      const popupContent = `
+        <strong style="font-size:1.1em; color:#d9a441">${p.pointNo}</strong><br>
+        <b>Code:</b> ${p.code || '—'}<br>
+        <b>X (RD):</b> ${formatNumber(p.x)}<br>
+        <b>Y (RD):</b> ${formatNumber(p.y)}<br>
+        <b>Z (NAP):</b> ${formatNumber(p.z)}
+      `;
 
-      marker.bindPopup(
-        `<div style="font-family:sans-serif; color:#111;">` +
-        `<strong style="font-size:1.1em;">${escapeHtml(p.pointNo)}</strong><br>` +
-        `<hr style="margin:4px 0; border:0; border-top:1px solid #ccc;">` +
-        `<b>X (RD):</b> ${formatExportNumber(p.x, 3)}<br>` +
-        `<b>Y (RD):</b> ${formatExportNumber(p.y, 3)}<br>` +
-        `<b>Z (NAP):</b> ${formatExportNumber(p.z, 3)}<br>` +
-        `<b>Code:</b> ${escapeHtml(p.code || "—")}` +
-        `</div>`
-      );
+      const marker = L.marker([coords.lat, coords.lon], { icon: customIcon })
+        .bindPopup(popupContent);
 
-      marker.addTo(state.markerLayer);
-      state.markers.set(p.id, marker);
-      bounds.push([ll.lat, ll.lon]);
+      state.markerLayer.addLayer(marker);
+      bounds.push([coords.lat, coords.lon]);
     });
 
-    if (bounds.length === 1) {
-      state.map.setView(bounds[0], 17);
-    } else if (bounds.length > 1) {
-      state.map.fitBounds(bounds, {padding:[40,40], maxZoom:18});
+    if (bounds.length > 0) {
+      state.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 18 });
     }
   }
 
   window.updateMap = updateMap;
 
-  function escapeHtml(s) {
-    return String(s ?? "").replace(/[&<>"']/g, ch => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-    }[ch]));
-  }
-
-  function selectedPointsOrAlert() {
-    const pts = state.points.filter(p => state.selected.has(p.id));
-    if (!pts.length) {
-      alert("Selecteer eerst minimaal één punt.");
-      return null;
-    }
-    return pts;
-  }
-
-  function formatExportNumber(v, decimals) {
-    if (!Number.isFinite(v)) return "";
-    return Number(v).toFixed(Math.max(0, Math.min(8, Number(decimals) || 0)));
-  }
-
-  function buildTxt() {
-    const pts = selectedPointsOrAlert();
-    if (!pts) return null;
-
-    const sep = delimiterChar(els.exportDelimiter.value);
-    const decimals = Number(els.exportDecimals.value) || 3;
-    const header = ["Puntnummer","X","Y","Z","Code"].join(sep);
-
-    const lines = [header];
-    pts.forEach(p => {
-      lines.push([
-        p.pointNo,
-        formatExportNumber(p.x, decimals),
-        formatExportNumber(p.y, decimals),
-        formatExportNumber(p.z, decimals),
-        p.code
-      ].join(sep));
-    });
-    return lines.join("\r\n") + "\r\n";
-  }
-
-  function downloadBlob(content, filename, type) {
-    const blob = new Blob([content], {type});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
-  function baseFileName() {
-    const custom = document.getElementById("exportName")?.value?.trim();
-    const raw = custom || (state.fileName || "meetdata").replace(/\.[^.]+$/, "");
-    return raw.replace(/[^\w\- áéèëïöüÁÉÈËÏÖÜ]+/g,"_").replace(/\s+/g,"_") || "meetdata";
+  // Export Functionaliteiten
+  function downloadFile(filename, text, mimeType="text/plain") {
+    const blob = new Blob([text], { type: mimeType + ";charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   function exportTxt() {
-    const txt = buildTxt();
-    if (txt == null) return;
-    downloadBlob(txt, `${baseFileName()}_controle.txt`, "text/plain;charset=utf-8");
-    setStatus("TXT geëxporteerd", "ok");
+    const selectedPoints = state.points.filter(p => state.selected.has(p.id));
+    if (!selectedPoints.length) {
+      alert("Selecteer eerst minstens één punt om te exporteren.");
+      return;
+    }
+
+    const delim = delimiterChar(els.exportDelimiter.value);
+    const decimals = parseInt(els.exportDecimals.value, 10) || 3;
+    const fileName = (els.exportName.value.trim() || "export_meetdata") + ".txt";
+
+    let content = "";
+    selectedPoints.forEach(p => {
+      const xStr = Number.isFinite(p.x) ? p.x.toFixed(decimals) : "";
+      const yStr = Number.isFinite(p.y) ? p.y.toFixed(decimals) : "";
+      const zStr = Number.isFinite(p.z) ? p.z.toFixed(decimals) : "";
+      content += `${p.pointNo}${delim}${xStr}${delim}${yStr}${delim}${zStr}${delim}${p.code}\r\n`;
+    });
+
+    downloadFile(fileName, content);
   }
 
   function exportKml() {
-    const pts = selectedPointsOrAlert();
-    if (!pts) return;
-
-    const mode = els.kmlHeightMode.value;
-    const placemarks = [];
-
-    pts.forEach(p => {
-      const ll = rdToWgs84(p.x,p.y);
-      if (!ll) return;
-
-      let height = 0;
-      if (mode === "absolute") height = Number.isFinite(p.z) ? p.z : 0;
-      if (mode === "clamp") height = Number.isFinite(p.z) ? Math.max(0,p.z) : 0;
-
-      placemarks.push(`
-    <Placemark>
-      <name>${escapeXml(p.pointNo)}</name>
-      <description>${escapeXml(
-        `Code: ${p.code || ""}\nX RD: ${formatExportNumber(p.x,3)}\nY RD: ${formatExportNumber(p.y,3)}\nZ NAP: ${formatExportNumber(p.z,3)}`
-      )}</description>
-      <ExtendedData>
-        <Data name="puntnummer"><value>${escapeXml(p.pointNo)}</value></Data>
-        <Data name="code"><value>${escapeXml(p.code || "")}</value></Data>
-        <Data name="x_rd"><value>${escapeXml(formatExportNumber(p.x,3))}</value></Data>
-        <Data name="y_rd"><value>${escapeXml(formatExportNumber(p.y,3))}</value></Data>
-        <Data name="z_nap"><value>${escapeXml(formatExportNumber(p.z,3))}</value></Data>
-      </ExtendedData>
-      <Point>
-        <altitudeMode>absolute</altitudeMode>
-        <coordinates>${ll.lon.toFixed(8)},${ll.lat.toFixed(8)},${height.toFixed(3)}</coordinates>
-      </Point>
-    </Placemark>`);
-    });
-
-    const kml = `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <name>${escapeXml(state.fileName || "Meetdata")}</name>
-    <open>1</open>
-    <Style id="pointStyle">
-      <IconStyle>
-        <scale>1.0</scale>
-      </IconStyle>
-    </Style>
-    ${placemarks.join("\n")}
-  </Document>
-</kml>`;
-
-    downloadBlob(kml, `${baseFileName()}_punten.kml`, "application/vnd.google-earth.kml+xml;charset=utf-8");
-    setStatus("KML geëxporteerd", "ok");
-  }
-
-  function escapeXml(s) {
-    return String(s ?? "").replace(/[<>&'"]/g, ch => ({
-      "<":"&lt;",">":"&gt;","&":"&amp;","'":"&apos;",'"':"&quot;"
-    }[ch]));
-  }
-
-  function updateFileMeta() {
-    if (!state.fileName) {
-      els.fileMeta.textContent = "Geen bestand geladen.";
+    const selectedPoints = state.points.filter(p => state.selected.has(p.id));
+    if (!selectedPoints.length) {
+      alert("Selecteer eerst minstens één punt om te exporteren.");
       return;
     }
-    const delimLabel = ({
-      tab:"Tab", comma:"Komma", space:"Spatie", semicolon:"Puntkomma"
-    })[state.delimiter];
 
-    els.fileMeta.innerHTML =
-      `<b>${escapeHtml(state.fileName)}</b><br>` +
-      `${state.rawRows.length} datarijen · import: ${delimLabel} · ` +
-      `${state.headers ? "header herkend" : "geen header herkend"}`;
+    const mode = els.kmlHeightMode.value;
+    const baseName = els.exportName.value.trim() || "export_meetdata";
+    const fileName = baseName + ".kml";
+
+    let kml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    kml += `<kml xmlns="http://www.opengis.net/kml/2.2">\n`;
+    kml += `  <Document>\n`;
+    kml += `    <name>${baseName}</name>\n`;
+
+    selectedPoints.forEach(p => {
+      const coords = rdToWgs84(p.x, p.y);
+      if (!coords) return;
+
+      let alt = 0;
+      let altitudeModeTag = `<altitudeMode>clampToGround</altitudeMode>`;
+      if (mode === "absolute" && Number.isFinite(p.z)) {
+        alt = p.z;
+        altitudeModeTag = `<altitudeMode>absolute</altitudeMode>`;
+      } else if (mode === "clamp" && Number.isFinite(p.z)) {
+        alt = Math.max(0, p.z);
+        altitudeModeTag = `<altitudeMode>relativeToGround</altitudeMode>`;
+      }
+
+      kml += `    <Placemark>\n`;
+      kml += `      <name>${p.pointNo}</name>\n`;
+      kml += `      <description><![CDATA[Code: ${p.code}<br>X: ${p.x}<br>Y: ${p.y}<br>Z: ${p.z}]]></description>\n`;
+      kml += `      <Point>\n`;
+      kml += `        ${altitudeModeTag}\n`;
+      kml += `        <coordinates>${coords.lon},${coords.lat},${alt}</coordinates>\n`;
+      kml += `      </Point>\n`;
+      kml += `    </Placemark>\n`;
+    });
+
+    kml += `  </Document>\n`;
+    kml += `</kml>`;
+
+    downloadFile(fileName, kml, "application/vnd.google-earth.kml+xml");
   }
 
-  // --- Events ---
-  els.dropzone.addEventListener("click", () => els.fileInput.click());
-  els.dropzone.addEventListener("keydown", e => {
-    if (e.key === "Enter" || e.key === " ") els.fileInput.click();
-  });
-  els.fileInput.addEventListener("change", e => handleFile(e.target.files[0]));
+  // Event Listeners Event Binding
+  function setupEvents() {
+    els.dropzone.addEventListener("click", () => els.fileInput.click());
+    els.fileInput.addEventListener("change", e => handleFile(e.target.files[0]));
 
-  ["dragenter","dragover"].forEach(ev => els.dropzone.addEventListener(ev, e => {
-    e.preventDefault(); e.stopPropagation(); els.dropzone.classList.add("dragover");
-  }));
-  ["dragleave","drop"].forEach(ev => els.dropzone.addEventListener(ev, e => {
-    e.preventDefault(); e.stopPropagation(); els.dropzone.classList.remove("dragover");
-  }));
-  els.dropzone.addEventListener("drop", e => {
-    handleFile(e.dataTransfer.files[0]);
-  });
+    els.dropzone.addEventListener("dragover", e => {
+      e.preventDefault();
+      els.dropzone.classList.add("dragover");
+    });
+    els.dropzone.addEventListener("dragleave", () => els.dropzone.classList.remove("dragover"));
+    els.dropzone.addEventListener("drop", e => {
+      e.preventDefault();
+      els.dropzone.classList.remove("dragover");
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
 
-  els.importDelimiter.addEventListener("change", () => {
-    if (state.rawContent) parseFileText(state.rawContent);
-  });
+    els.importDelimiter.addEventListener("change", () => {
+      if (state.rawContent) parseFileText(state.rawContent);
+    });
 
-  els.filterCodeBtn.addEventListener("click", () => {
-    state.codeFilterApplied = true;
-    applyTableFilters();
-    updateHeaderCheckbox();
-  });
-  els.clearFilterBtn.addEventListener("click", () => {
-    els.codeFilter.value = "";
-    state.codeFilterApplied = false;
-    applyTableFilters();
-  });
+    els.scanDuplicatesBtn.addEventListener("click", () => scanDuplicates(true));
+    els.markDuplicatesBtn.addEventListener("click", () => {
+      scanDuplicates(false);
+      state.points.forEach(p => {
+        if (p.duplicateNumber || p.duplicateXY) state.selected.add(p.id);
+      });
+      renderSelectionOnly();
+    });
 
-  els.codeFilter.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
+    els.selectAllBtn.addEventListener("click", () => selectAll(true));
+    els.deselectAllBtn.addEventListener("click", () => selectAll(false));
+    els.headerCheckbox.addEventListener("change", e => {
+      const visible = getVisiblePoints();
+      visible.forEach(p => {
+        if (e.target.checked) state.selected.add(p.id);
+        else state.selected.delete(p.id);
+      });
+      renderSelectionOnly();
+    });
+
+    els.filterCodeBtn.addEventListener("click", () => {
       state.codeFilterApplied = true;
       applyTableFilters();
-    }
-  });
-
-  els.selectCodeBtn.addEventListener("click", () => toggleCodeSelection(true));
-  els.deselectCodeBtn.addEventListener("click", () => toggleCodeSelection(false));
-
-  els.scanDuplicatesBtn.addEventListener("click", () => {
-    scanDuplicates(true);
-    renderAll();
-  });
-
-  els.markDuplicatesBtn.addEventListener("click", () => {
-    state.points.forEach(p => {
-      if (p.duplicateNumber || p.duplicateXY) state.selected.add(p.id);
     });
-    renderSelectionOnly();
-    setStatus("Duplicaten geselecteerd", "warn");
-  });
+    els.clearFilterBtn.addEventListener("click", () => {
+      els.codeFilter.value = "";
+      state.codeFilterApplied = false;
+      applyTableFilters();
+    });
 
-  els.selectAllBtn.addEventListener("click", () => selectAll(true));
-  els.deselectAllBtn.addEventListener("click", () => selectAll(false));
+    els.selectCodeBtn.addEventListener("click", () => toggleCodeSelection(true));
+    els.deselectCodeBtn.addEventListener("click", () => toggleCodeSelection(false));
 
-  els.headerCheckbox.addEventListener("change", () => {
-    const visible = getVisiblePoints();
-    if (els.headerCheckbox.checked) visible.forEach(p => state.selected.add(p.id));
-    else visible.forEach(p => state.selected.delete(p.id));
-    renderSelectionOnly();
-  });
+    els.tableSearch.addEventListener("input", applyTableFilters);
 
-  els.tableSearch.addEventListener("input", applyTableFilters);
-
-  els.exportTxtBtn.addEventListener("click", exportTxt);
-  els.exportKmlBtn.addEventListener("click", exportKml);
-
-  window.addEventListener("resize", () => {
-    if (state.map) state.map.invalidateSize();
-  });
-
-  // Start
-  try {
-    initMap();
-  } catch (err) {
-    console.error(err);
-    els.fileMeta.textContent = "Kaart kon niet worden gestart. Controleer of Leaflet via internet beschikbaar is.";
+    els.exportTxtBtn.addEventListener("click", exportTxt);
+    els.exportKmlBtn.addEventListener("click", exportKml);
   }
+
+  // Initialisatie bij laden
+  document.addEventListener("DOMContentLoaded", () => {
+    initMap();
+    setupEvents();
+  });
 })();
 </script>
 </body>
