@@ -1,225 +1,1299 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Switi Sranan - Surinaams Eten Bestellen</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f9f6f0; color: #333; line-height: 1.6; }
-        header { background-color: #d84315; color: white; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .logo { font-size: 1.8rem; font-weight: bold; }
-        .hero { background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80'); background-size: cover; background-position: center; color: white; text-align: center; padding: 3rem 1rem; }
-        
-        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
-        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Meetdata Controle — Maatvoerder</title>
 
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; }
-        .dish-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: space-between; }
-        .dish-info { padding: 1.2rem; }
-        .dish-title { font-size: 1.2rem; color: #2e7d32; font-weight: bold; }
-        .dish-price { font-weight: bold; color: #d84315; font-size: 1.1rem; margin: 0.3rem 0; }
-        .dish-desc { font-size: 0.85rem; color: #666; margin-bottom: 1rem; }
-        .btn-add { width: 100%; background-color: #2e7d32; color: white; border: none; padding: 0.7rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        
-        .cart-section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); height: fit-content; }
-        .cart-title { font-size: 1.4rem; border-bottom: 2px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1rem; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
-        .cart-item-controls button { background: #eee; border: none; width: 24px; height: 24px; border-radius: 3px; cursor: pointer; }
-        .cart-total { border-top: 2px solid #eee; padding-top: 1rem; margin-top: 1rem; font-size: 1.2rem; font-weight: bold; display: flex; justify-content: space-between; }
-        
-        .form-group { margin-top: 1rem; }
-        .form-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 0.3rem; }
-        .form-group input, .form-group select { width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
-        
-        .btn-order { width: 100%; background-color: #d84315; color: white; border: none; padding: 0.9rem; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold; margin-top: 1.5rem; }
-        .btn-order:disabled { background-color: #ccc; cursor: not-allowed; }
-    </style>
+<!-- Leaflet voor de interactieve kaart -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIINfQ3RER8jK0oZ0jX3M6Q9s0n4R7hR7cY="
+  crossorigin=""
+/>
+
+<style>
+:root{
+  --bg:#0b1220;
+  --panel:#111827;
+  --panel2:#172033;
+  --line:#263247;
+  --text:#eef2f7;
+  --muted:#9ca9bd;
+  --accent:#d9a441;
+  --accent2:#f2c66d;
+  --ok:#41c58a;
+  --warn:#f1b74a;
+  --danger:#ef6a6a;
+  --shadow:0 12px 35px rgba(0,0,0,.22);
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100vh}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{max-width:1600px;margin:0 auto;padding:16px}
+.topbar{
+  position:sticky;top:0;z-index:1000;
+  background:rgba(11,18,32,.94);backdrop-filter:blur(12px);
+  padding:8px 0 14px;
+}
+.topbar-inner{display:flex;gap:12px;align-items:center;justify-content:space-between}
+.title h1{margin:0;font-size:1.35rem;letter-spacing:.2px}
+.title p{margin:3px 0 0;color:var(--muted);font-size:.88rem}
+.status-pill{
+  display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--line);
+  border-radius:999px;background:var(--panel);font-size:.82rem;color:var(--muted)
+}
+.dot{width:9px;height:9px;border-radius:50%;background:#667085}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.danger{background:var(--danger)}
+
+.grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px}
+.panel{
+  background:linear-gradient(180deg,var(--panel),#0f1726);
+  border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.panel-header{padding:14px 16px;border-bottom:1px solid var(--line);font-weight:700}
+.panel-body{padding:14px 16px}
+
+/* Styling voor inklapbare details */
+details.control-section {
+  border-bottom: 1px solid var(--line);
+}
+details.control-section:last-child {
+  border-bottom: none;
+}
+details.control-section summary {
+  padding: 12px 16px;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--accent2);
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+details.control-section summary::-webkit-details-marker {
+  display: none;
+}
+details.control-section summary::after {
+  content: "►";
+  font-size: .7rem;
+  color: var(--muted);
+  transition: transform .2s;
+}
+details.control-section[open] summary::after {
+  transform: rotate(90deg);
+}
+details.control-section .section-content {
+  padding: 0 16px 14px 16px;
+}
+
+.row{display:flex;gap:8px;align-items:center}
+.row>*{min-width:0}
+.row.wrap{flex-wrap:wrap}
+.field{margin-bottom:9px}
+.field label{display:block;font-size:.79rem;color:var(--muted);margin:0 0 5px}
+input[type="text"],input[type="number"],select{
+  width:100%;background:#0d1524;color:var(--text);border:1px solid var(--line);
+  border-radius:10px;padding:10px 11px;outline:none;
+}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,164,65,.12)}
+input[type="checkbox"]{accent-color:var(--accent);width:18px;height:18px}
+.btn{
+  border:1px solid var(--line);border-radius:10px;background:#151f31;color:var(--text);
+  padding:10px 12px;transition:.15s;min-height:42px
+}
+.btn:hover{border-color:#40506b;background:#1a263b}
+.btn.primary{background:var(--accent);color:#1b160c;border-color:var(--accent);font-weight:800}
+.btn.primary:hover{background:var(--accent2)}
+.btn.ok{border-color:rgba(65,197,138,.45);color:#9de7c6}
+.btn.warn{border-color:rgba(241,183,74,.45);color:#f5d18b}
+.btn.danger{border-color:rgba(239,106,106,.45);color:#ffabab}
+.btn.small{padding:8px 9px;min-height:36px;font-size:.82rem}
+.btn.full{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.hint{font-size:.75rem;line-height:1.4;color:var(--muted)}
+.badges{display:flex;flex-wrap:wrap;gap:6px}
+.badge{
+  padding:5px 8px;border-radius:999px;font-size:.72rem;background:#172135;border:1px solid var(--line);color:var(--muted)
+}
+.badge.ok{color:#9de7c6;border-color:rgba(65,197,138,.3)}
+.badge.warn{color:#f5d18b;border-color:rgba(241,183,74,.3)}
+.badge.danger{color:#ffabab;border-color:rgba(239,106,106,.3)}
+
+.dropzone{
+  border:1.5px dashed #45556f;border-radius:14px;padding:18px 14px;text-align:center;
+  background:rgba(255,255,255,.015);transition:.15s
+}
+.dropzone.dragover{border-color:var(--accent);background:rgba(217,164,65,.07)}
+.dropzone strong{display:block;margin-bottom:4px}
+.dropzone small{color:var(--muted)}
+#fileInput{display:none}
+
+.main{min-width:0}
+.toolbar{
+  display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  padding:11px 12px;border-bottom:1px solid var(--line);background:#101a2a
+}
+.toolbar-left,.toolbar-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.search{width:min(300px,60vw)}
+.table-wrap{overflow:auto;max-height:52vh;min-height:260px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:.83rem}
+thead th{
+  position:sticky;top:0;z-index:2;background:#182236;color:#cbd5e1;font-weight:700;
+  text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap
+}
+tbody td{padding:8px;border-bottom:1px solid #1e293b;white-space:nowrap}
+tbody tr:hover{background:rgba(255,255,255,.025)}
+tbody tr.selected{background:rgba(217,164,65,.08)}
+tbody tr.duplicate{background:rgba(239,106,106,.08)}
+tbody tr.hidden{display:none}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.code{font-weight:700;letter-spacing:.03em}
+.flag{
+  display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border-radius:6px;font-size:.7rem;
+  border:1px solid rgba(239,106,106,.35);color:#ffabab
+}
+.empty{
+  display:flex;align-items:center;justify-content:center;min-height:240px;color:var(--muted);padding:30px;text-align:center
+}
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+#map{height:430px;background:#0c1320}
+.map-note{font-size:.72rem;color:var(--muted);padding:8px 12px;border-top:1px solid var(--line)}
+.map-legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:.75rem;color:var(--muted)}
+.legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px}
+.control-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric{
+  padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#0d1524
+}
+.metric strong{display:block;font-size:1.15rem}
+.metric span{display:block;font-size:.72rem;color:var(--muted);margin-top:3px}
+.alert{border-radius:12px;padding:11px 12px;margin-top:10px;font-size:.84rem;line-height:1.45}
+.alert.ok{background:rgba(65,197,138,.08);border:1px solid rgba(65,197,138,.28);color:#baf0da}
+.alert.warn{background:rgba(241,183,74,.08);border:1px solid rgba(241,183,74,.28);color:#f6d99c}
+.alert.danger{background:rgba(239,106,106,.08);border:1px solid rgba(239,106,106,.28);color:#ffb8b8}
+
+.mapping-grid{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px
+}
+.mapping-grid .field{margin:0}
+
+.export-panel {
+  margin-top: 16px;
+}
+
+.footer{padding:16px 0 4px;color:#66758d;font-size:.72rem;text-align:center}
+
+@media (max-width:1100px){
+  .grid{grid-template-columns:1fr}
+  .table-wrap{max-height:48vh}
+}
+@media (max-width:760px){
+  .app{padding:10px}
+  .topbar{padding-bottom:10px}
+  .title h1{font-size:1.1rem}
+  .status-pill{font-size:.72rem}
+  .bottom-grid{grid-template-columns:1fr}
+  .control-grid{grid-template-columns:1fr}
+  .mapping-grid{grid-template-columns:1fr 1fr}
+  #map{height:360px}
+  thead th,tbody td{padding:8px 6px}
+}
+</style>
 </head>
+
 <body>
+<div class="app">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="title">
+        <h1>Meetdata Controle</h1>
+        <p>RD2018 · maatvoering · opstart & grondslag</p>
+      </div>
+      <div class="status-pill">
+        <span id="statusDot" class="dot"></span>
+        <span id="statusText">Geen bestand geladen</span>
+      </div>
+    </div>
+  </header>
 
-    <header>
-        <div class="logo">🇸🇷 Switi Sranan</div>
-        <div id="cart-count">🛒 Winkelmandje (0)</div>
-    </header>
+  <div class="grid">
+    <aside class="panel">
+      <div class="panel-header">Import & controle</div>
+      
+      <!-- Sectie 1 (Inklapbaar) -->
+      <details class="control-section">
+        <summary>1 · Meetbestand</summary>
+        <div class="section-content">
+          <div id="dropzone" class="dropzone" tabindex="0">
+            <strong>Sleep hier je meetbestand heen</strong>
+            <small>of tik om .txt, .csv, .asc of vergelijkbare tekstdata te kiezen</small>
+            <input id="fileInput" type="file" accept=".txt,.csv,.asc,.dat,.log,.prn,text/plain,text/csv">
+          </div>
+        </div>
+      </details>
 
-    <section class="hero">
-        <h1>Authentiek Surinaams Genieten</h1>
-        <p>Bestel direct online en betaal via iDEAL.</p>
+      <!-- Sectie 2 (Inklapbaar) -->
+      <details class="control-section">
+        <summary>2 · Scheidingsteken</summary>
+        <div class="section-content">
+          <div class="control-grid">
+            <div class="field">
+              <label for="importDelimiter">Import</label>
+              <select id="importDelimiter">
+                <option value="tab">Tab</option>
+                <option value="comma">Komma</option>
+                <option value="space">Spatie</option>
+                <option value="semicolon">Puntkomma</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="exportDelimiter">TXT-export</label>
+              <select id="exportDelimiter">
+                <option value="tab">Tab</option>
+                <option value="comma">Komma</option>
+                <option value="space">Spatie</option>
+                <option value="semicolon">Puntkomma</option>
+              </select>
+            </div>
+          </div>
+          <div class="hint">RD2018: X = Oosting, Y = Noording, Z = NAP.</div>
+        </div>
+      </details>
+
+      <!-- Sectie 3 (Inklapbaar) -->
+      <details class="control-section">
+        <summary>3 · Kolomindeling</summary>
+        <div class="section-content">
+          <div id="mappingArea" class="mapping-grid"></div>
+          <div id="mappingHint" class="hint" style="margin-top:8px">Laad eerst een bestand.</div>
+        </div>
+      </details>
+
+      <!-- Sectie 4 (Inklapbaar) -->
+      <details class="control-section">
+        <summary>4 · Code-filter</summary>
+        <div class="section-content">
+          <div class="field">
+            <label for="codeFilter">Code bevat (wildcards & komma's toegestaan)</label>
+            <input id="codeFilter" type="text" placeholder="bijv. *ST*, *GD*, *RL*">
+          </div>
+          <div class="row wrap">
+            <button id="filterCodeBtn" class="btn small">Filter tabel</button>
+            <button id="clearFilterBtn" class="btn small">Wis filter</button>
+          </div>
+          <div class="row wrap" style="margin-top:8px">
+            <button id="selectCodeBtn" class="btn small">Selecteer match</button>
+            <button id="deselectCodeBtn" class="btn small">Deselecteer match</button>
+          </div>
+        </div>
+      </details>
+
+      <!-- Sectie 5 (Inklapbaar) -->
+      <details class="control-section">
+        <summary>5 · Duplicaten</summary>
+        <div class="section-content">
+          <div class="row wrap">
+            <button id="scanDuplicatesBtn" class="btn small warn">Scan opnieuw</button>
+            <button id="markDuplicatesBtn" class="btn small danger">Selecteer duplicaten</button>
+          </div>
+          <div id="duplicateInfo" class="hint" style="margin-top:8px">Nog geen scan uitgevoerd.</div>
+        </div>
+      </details>
+
+    </aside>
+
+    <main class="panel main">
+      <div class="toolbar" style="padding:14px 12px;background:#172033">
+        <div class="toolbar-left">
+          <button id="selectAllBtn" class="btn primary small">✓ Selecteer alles</button>
+          <button id="deselectAllBtn" class="btn small">Deselecteer alles</button>
+          <span class="badge" id="selectionBadge">0 geselecteerd</span>
+        </div>
+        <div class="toolbar-right">
+          <input id="tableSearch" class="search" type="text" placeholder="Zoek puntnummer, code of coördinaat…">
+        </div>
+      </div>
+
+      <div id="tableEmpty" class="empty">
+        Laad een meetbestand om de meetpunten hier te tonen.
+      </div>
+
+      <div id="tableWrap" class="table-wrap" style="display:none">
+        <table>
+          <thead>
+            <tr>
+              <th><input id="headerCheckbox" type="checkbox" title="Selectie"></th>
+              <th>Puntnummer</th>
+              <th class="num">X (RD)</th>
+              <th class="num">Y (RD)</th>
+              <th class="num">Z (NAP)</th>
+              <th>Code</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="pointTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="panel-body" style="border-top:1px solid var(--line)">
+        <div class="badges" id="statsBadges">
+          <span class="badge">Geen data</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="bottom-grid">
+    <section class="panel">
+      <div class="panel-header">Kaart · geselecteerde punten</div>
+      <div id="map"></div>
+      <div class="map-note">
+        <div class="map-legend">
+          <span><span class="legend-dot" style="background:#d9a441"></span>Geselecteerd</span>
+          <span><span class="legend-dot" style="background:#ef6a6a"></span>Dubbel/verdacht</span>
+          <span>OSM-achtergrond · internetverbinding vereist</span>
+        </div>
+      </div>
     </section>
 
-    <div class="container">
-        <main>
-            <h2 style="margin-bottom: 1.5rem;">Ons Menu</h2>
-            <div class="menu-grid" id="menu-container"></div>
-        </main>
+    <section class="panel">
+      <div class="panel-header">Controle-overzicht</div>
+      <div class="panel-body">
+        <div class="control-grid">
+          <div class="metric"><strong id="mTotal">0</strong><span>Totaal punten</span></div>
+          <div class="metric"><strong id="mSelected">0</strong><span>Geselecteerd</span></div>
+          <div class="metric"><strong id="mDupNr">0</strong><span>Dubbel puntnummer</span></div>
+          <div class="metric"><strong id="mDupXY">0</strong><span>Identieke XY</span></div>
+        </div>
+        <div id="overviewAlert" class="alert" style="display:none"></div>
 
-        <aside class="cart-section">
-            <h2 class="cart-title">Jouw Bestelling</h2>
-            <div id="cart-items">
-                <p style="color: #888;">Je winkelmandje is leeg.</p>
-            </div>
-            <div class="cart-total">
-                <span>Totaal:</span>
-                <span id="cart-total-price">€ 0,00</span>
-            </div>
+        <div class="section-title" style="margin-top:16px">RD → WGS84</div>
+        <div class="hint">
+          De kaart gebruikt een ingebouwde inverse RD-formule voor de Nederlandse Rijksdriehoekscoördinaten.
+          De oorspronkelijke RD-data in de tabel blijft ongewijzigd.
+        </div>
+        <div class="section-title">Bestand</div>
+        <div id="fileMeta" class="hint">Geen bestand geladen.</div>
+      </div>
+    </section>
+  </div>
 
-            <!-- Bestel- en Adresformulier -->
-            <form id="checkout-form" action="https://formsubmit.co/rickyoung1997@gmail.com" method="POST" onsubmit="return validateOrder(event)">
-                <!-- FormSubmit instellingen -->
-                <input type="hidden" name="_subject" value="Nieuwe Bestelling - Switi Sranan">
-                <input type="hidden" name="_captcha" value="false">
-                <input type="hidden" name="Bestelling_Overzicht" id="hidden-order-details">
-                <input type="hidden" name="Totaalbedrag" id="hidden-total-price">
-
-                <div class="form-group">
-                    <label for="naam">Naam *</label>
-                    <input type="text" id="naam" name="Klant_Naam" required placeholder="Bijv. Soema">
-                </div>
-
-                <div class="form-group">
-                    <label for="email">E-mailadres *</label>
-                    <input type="email" id="email" name="Klant_Email" required placeholder="naam@voorbeeld.nl">
-                </div>
-
-                <div class="form-group">
-                    <label for="telefoon">Telefoonnummer *</label>
-                    <input type="tel" id="telefoon" name="Klant_Telefoon" required placeholder="0612345678">
-                </div>
-
-                <div class="form-group">
-                    <label for="adres">Straat & Huisnummer *</label>
-                    <input type="text" id="adres" name="Klant_Adres" required placeholder="Kerkstraat 12A">
-                </div>
-
-                <div class="form-group">
-                    <label for="postcode">Postcode & Plaats *</label>
-                    <input type="text" id="postcode" name="Klant_Postcode_Plaats" required placeholder="1234 AB Amsterdam">
-                </div>
-
-                <div class="form-group">
-                    <label for="bank">Betaal via iDEAL (Kies je bank) *</label>
-                    <select id="bank" name="Gekozen_Bank" required>
-                        <option value="">-- Selecteer bank --</option>
-                        <option value="ING">ING</option>
-                        <option value="Rabobank">Rabobank</option>
-                        <option value="ABN AMRO">ABN AMRO</option>
-                        <option value="SNS Bank">SNS Bank</option>
-                        <option value="ASN Bank">ASN Bank</option>
-                        <option value="RegioBank">RegioBank</option>
-                        <option value="Triodos Bank">Triodos Bank</option>
-                        <option value="Bunq">Bunq</option>
-                        <option value="Revolut">Revolut</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="btn-order" id="submit-btn" disabled>Bestellen & Betalen via iDEAL</button>
-            </form>
-        </aside>
+  <!-- Sectie 6 (Export - Onderaan de pagina) -->
+  <section class="panel export-panel">
+    <div class="panel-header">6 · Export</div>
+    <div class="panel-body">
+      <div class="field">
+        <label for="exportName">Naam voor exportbestand</label>
+        <input id="exportName" type="text" placeholder="bijv. grondslag_project_01">
+      </div>
+      <div class="control-grid">
+        <div class="field">
+          <label for="exportDecimals">Decimalen X/Y/Z</label>
+          <input id="exportDecimals" type="number" min="0" max="8" step="1" value="3">
+        </div>
+        <div class="field">
+          <label for="kmlHeightMode">KML hoogte</label>
+          <select id="kmlHeightMode">
+            <option value="absolute">NAP als absolute hoogte</option>
+            <option value="clamp">NAP + clamp op 0 m</option>
+            <option value="0">Geen hoogte (0 m)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row wrap" style="margin-top:10px">
+        <button id="exportTxtBtn" class="btn ok">Exporteer TXT</button>
+        <button id="exportKmlBtn" class="btn primary">Exporteer KML</button>
+      </div>
+      <div class="hint" style="margin-top:7px">
+        Alleen geselecteerde punten worden geëxporteerd.
+      </div>
     </div>
+  </section>
 
-    <script>
-        const menuDishes = [
-            { id: 1, name: "Roti Kip Special", price: 12.50, desc: "Met malse kip, aardappel, kouseband en een gekookt ei." },
-            { id: 2, name: "Broodje Pom", price: 4.50, desc: "Vers Surinaams pistoletje rijk gevuld met kruidige pom." },
-            { id: 3, name: "Broodje Bakkeljauw", price: 4.50, desc: "Knapperig broodje gevuld met pittig gekruide vis." },
-            { id: 4, name: "Saoto Soep", price: 7.50, desc: "Rijke Surinaams-Javaanse kippensoep met taugé, ei en chips." },
-            { id: 5, name: "Moksi Meti Nasi", price: 13.50, desc: "Geroosterd varkensvlees, kip en fa chong op gekruide nasi." },
-            { id: 6, name: "Telo met Bakkeljauw", price: 9.00, desc: "Krokant gebakken cassave met pittige bakkeljauw." },
-            { id: 7, name: "Bami Paramaribo", price: 11.00, desc: "Surinaamse bami met ketjapkip en zuurgoed van komkommer." },
-            { id: 8, name: "Dawet", price: 3.50, desc: "Verfrissende kokos-sodadrank met pinda-essence." }
-        ];
+  <div class="footer">
+    Meetdata Controle · single-file HTML/JS · geschikt voor laptop, tablet en telefoon
+  </div>
+</div>
 
-        let cart = {};
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
 
-        function renderMenu() {
-            const container = document.getElementById('menu-container');
-            container.innerHTML = menuDishes.map(dish => `
-                <div class="dish-card">
-                    <div class="dish-info">
-                        <div class="dish-title">${dish.name}</div>
-                        <div class="dish-price">€ ${dish.price.toFixed(2).replace('.', ',')}</div>
-                        <div class="dish-desc">${dish.desc}</div>
-                    </div>
-                    <div style="padding: 0 1.2rem 1.2rem 1.2rem;">
-                        <button class="btn-add" onclick="addToCart(${dish.id})">+ Toevoegen</button>
-                    </div>
-                </div>
-            `).join('');
+<script>
+(() => {
+  "use strict";
+
+  const state = {
+    fileName: "",
+    rawRows: [],
+    headers: null,
+    points: [],
+    selected: new Set(),
+    delimiter: "tab",
+    codeFilterApplied: false,
+    duplicatesScanned: false,
+    map: null,
+    markers: new Map(),
+    markerLayer: null
+  };
+
+  const $ = id => document.getElementById(id);
+
+  const els = {
+    dropzone: $("dropzone"),
+    fileInput: $("fileInput"),
+    importDelimiter: $("importDelimiter"),
+    exportDelimiter: $("exportDelimiter"),
+    mappingArea: $("mappingArea"),
+    mappingHint: $("mappingHint"),
+    codeFilter: $("codeFilter"),
+    filterCodeBtn: $("filterCodeBtn"),
+    clearFilterBtn: $("clearFilterBtn"),
+    selectCodeBtn: $("selectCodeBtn"),
+    deselectCodeBtn: $("deselectCodeBtn"),
+    scanDuplicatesBtn: $("scanDuplicatesBtn"),
+    markDuplicatesBtn: $("markDuplicatesBtn"),
+    duplicateInfo: $("duplicateInfo"),
+    exportTxtBtn: $("exportTxtBtn"),
+    exportKmlBtn: $("exportKmlBtn"),
+    exportDecimals: $("exportDecimals"),
+    kmlHeightMode: $("kmlHeightMode"),
+    selectAllBtn: $("selectAllBtn"),
+    deselectAllBtn: $("deselectAllBtn"),
+    headerCheckbox: $("headerCheckbox"),
+    tableSearch: $("tableSearch"),
+    tableEmpty: $("tableEmpty"),
+    tableWrap: $("tableWrap"),
+    pointTableBody: $("pointTableBody"),
+    selectionBadge: $("selectionBadge"),
+    statsBadges: $("statsBadges"),
+    mTotal: $("mTotal"),
+    mSelected: $("mSelected"),
+    mDupNr: $("mDupNr"),
+    mDupXY: $("mDupXY"),
+    overviewAlert: $("overviewAlert"),
+    fileMeta: $("fileMeta"),
+    statusDot: $("statusDot"),
+    statusText: $("statusText")
+  };
+
+  // Hulpfunctie om wildcard-patronen (bijv. *ST*, *GD*, *RL*) om te zetten naar Regex
+  function wildcardToRegExp(pattern) {
+    const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+    const regexString = '^' + escaped.replace(/\*/g, '.*').replace(/\?/g, '.') + '$';
+    return new RegExp(regexString, 'i');
+  }
+
+  // Controleert of een code matched met een kommagescheiden patroonreeks
+  function matchCodePattern(codeValue, filterInput) {
+    if (!filterInput) return true;
+    const code = (codeValue || "").trim();
+    const patterns = filterInput.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    if (!patterns.length) return true;
+
+    return patterns.some(pattern => {
+      let p = pattern;
+      if (!p.includes('*') && !p.includes('?')) {
+        p = '*' + p + '*';
+      }
+      return wildcardToRegExp(p).test(code);
+    });
+  }
+
+  function setStatus(text, kind="") {
+    els.statusText.textContent = text;
+    els.statusDot.className = "dot" + (kind ? " " + kind : "");
+  }
+
+  function delimiterChar(value) {
+    return value === "tab" ? "\t"
+      : value === "comma" ? ","
+      : value === "semicolon" ? ";"
+      : " ";
+  }
+
+  function parseDelimitedLine(line, delim) {
+    if (delim === " ") {
+      const out = [];
+      let current = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') { inQuotes = !inQuotes; continue; }
+        if (!inQuotes && /\s/.test(ch)) {
+          if (current !== "") { out.push(current); current = ""; }
+        } else {
+          current += ch;
         }
+      }
+      if (current !== "") out.push(current);
+      return out;
+    }
 
-        function addToCart(id) {
-            cart[id] = (cart[id] || 0) + 1;
-            updateCartUI();
+    const out = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"'; i++;
+        } else {
+          inQuotes = !inQuotes;
         }
+      } else if (ch === delim && !inQuotes) {
+        out.push(current.trim());
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+    out.push(current.trim());
+    return out;
+  }
 
-        function changeQuantity(id, delta) {
-            if (cart[id]) {
-                cart[id] += delta;
-                if (cart[id] <= 0) delete cart[id];
-            }
-            updateCartUI();
-        }
+  function parseFlexibleNumber(value) {
+    if (value == null) return NaN;
+    let s = String(value).trim();
+    if (!s) return NaN;
+    s = s.replace(/\s+/g, "");
 
-        function updateCartUI() {
-            const cartItemsContainer = document.getElementById('cart-items');
-            const totalElement = document.getElementById('cart-total-price');
-            const cartCountElement = document.getElementById('cart-count');
-            const submitBtn = document.getElementById('submit-btn');
+    const lastComma = s.lastIndexOf(",");
+    const lastDot = s.lastIndexOf(".");
+    if (lastComma >= 0 && lastDot >= 0) {
+      if (lastComma > lastDot) {
+        s = s.replace(/\./g, "").replace(",", ".");
+      } else {
+        s = s.replace(/,/g, "");
+      }
+    } else if (lastComma >= 0) {
+      s = s.replace(",", ".");
+    }
+    s = s.replace(/[^0-9eE+.\-]/g, "");
+    return Number(s);
+  }
 
-            const itemIds = Object.keys(cart);
-            let total = 0;
-            let itemCount = 0;
-            let summaryString = "";
+  function normalizeHeader(s) {
+    return String(s ?? "")
+      .toLowerCase()
+      .replace(/[()\[\]{}]/g, " ")
+      .replace(/[._\-\/]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
 
-            if (itemIds.length === 0) {
-                cartItemsContainer.innerHTML = '<p style="color: #888;">Je winkelmandje is leeg.</p>';
-                submitBtn.disabled = true;
-            } else {
-                cartItemsContainer.innerHTML = itemIds.map(id => {
-                    const dish = menuDishes.find(d => d.id == id);
-                    const qty = cart[id];
-                    const itemTotal = dish.price * qty;
-                    total += itemTotal;
-                    itemCount += qty;
+  function looksLikeHeader(row) {
+    const text = row.map(normalizeHeader).join(" ");
+    const keywords = [
+      "punt", "point", "nummer", "nummering",
+      "x", "y", "z", "hoogte", "height", "code",
+      "oost", "oosting", "noord", "noording", "rd"
+    ];
+    const hits = keywords.filter(k => text.split(/\s+/).includes(k) || text.includes(" " + k + " "));
+    const numericCells = row.filter(v => !Number.isNaN(parseFlexibleNumber(v))).length;
+    return hits.length >= 2 && numericCells < Math.max(2, row.length / 2);
+  }
 
-                    summaryString += `${qty}x ${dish.name} (€${itemTotal.toFixed(2)}), `;
+  function detectMapping(headers, maxCols) {
+    const result = { point:0, x:1, y:2, z:3, code:4 };
+    if (!headers) return result;
 
-                    return `
-                        <div class="cart-item">
-                            <div>
-                                <strong>${dish.name}</strong><br>
-                                <small>€ ${dish.price.toFixed(2).replace('.', ',')}</small>
-                            </div>
-                            <div class="cart-item-controls">
-                                <button type="button" onclick="changeQuantity(${id}, -1)">-</button>
-                                <span style="margin: 0 5px;">${qty}</span>
-                                <button type="button" onclick="changeQuantity(${id}, 1)">+</button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-                submitBtn.disabled = false;
-            }
+    const h = headers.map(normalizeHeader);
 
-            const formattedTotal = `€ ${total.toFixed(2).replace('.', ',')}`;
-            totalElement.textContent = formattedTotal;
-            cartCountElement.textContent = `🛒 Winkelmandje (${itemCount})`;
+    const find = patterns => {
+      for (const p of patterns) {
+        const i = h.findIndex(v => v === p || v.includes(p));
+        if (i >= 0) return i;
+      }
+      return -1;
+    };
 
-            document.getElementById('hidden-order-details').value = summaryString;
-            document.getElementById('hidden-total-price').value = formattedTotal;
-        }
+    result.point = find(["puntnummer","punt nummer","pointnumber","point number","point","punt","nummer"]);
+    result.x = find(["x rd","x (rd)","oosting","east","easting","x"]);
+    result.y = find(["y rd","y (rd)","noording","north","northing","y"]);
+    result.z = find(["z nap","z (nap)","nap hoogte","nap","hoogte","height","z"]);
+    result.code = find(["code","pointcode","puntcode","omschrijving","description"]);
 
-        function validateOrder(e) {
-            if (Object.keys(cart).length === 0) {
-                alert("Voeg eerst gerechten toe aan je winkelmandje.");
-                e.preventDefault();
-                return false;
-            }
-            return true;
-        }
+    if (result.x < 0 || result.x >= maxCols) result.x = 1;
+    if (result.y < 0 || result.y >= maxCols) result.y = 2;
+    if (result.z < 0 || result.z >= maxCols) result.z = 3;
+    if (result.code < 0 || result.code >= maxCols) result.code = Math.min(4, maxCols - 1);
+    if (result.point < 0 || result.point >= maxCols) result.point = 0;
 
-        renderMenu();
-    </script>
+    return result;
+  }
+
+  function handleFile(file) {
+    if (!file) return;
+    state.fileName = file.name || "meetdata.txt";
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        parseFileText(String(reader.result || ""));
+      } catch (err) {
+        console.error(err);
+        setStatus("Fout bij inlezen", "danger");
+        alert("Het bestand kon niet worden verwerkt. Controleer het scheidingsteken en de inhoud.");
+      }
+    };
+    reader.onerror = () => {
+      setStatus("Bestand kon niet worden gelezen", "danger");
+    };
+    reader.readAsText(file, "UTF-8");
+  }
+
+  function parseFileText(text) {
+    const delim = delimiterChar(els.importDelimiter.value);
+    state.delimiter = els.importDelimiter.value;
+
+    const lines = text
+      .replace(/^\uFEFF/, "")
+      .split(/\r?\n/)
+      .map(s => s.trim())
+      .filter(s => s !== "" && !/^\s*(#|\/\/)/.test(s));
+
+    if (!lines.length) {
+      state.rawRows = [];
+      state.points = [];
+      state.selected.clear();
+      renderAll();
+      setStatus("Leeg bestand", "warn");
+      return;
+    }
+
+    let rows = lines.map(line => parseDelimitedLine(line, delim));
+    const headerDetected = looksLikeHeader(rows[0]);
+    state.headers = headerDetected ? rows.shift() : null;
+    state.rawRows = rows;
+
+    const maxCols = rows.reduce((m, r) => Math.max(m, r.length), state.headers ? state.headers.length : 0);
+    renderMapping(detectMapping(state.headers, Math.max(1, maxCols)));
+    rebuildPoints();
+    setStatus(`${state.points.length} punten ingelezen`, state.points.length ? "ok" : "warn");
+  }
+
+  function renderMapping(mapping) {
+    const labels = [
+      ["point","Puntnummer"],
+      ["x","X (RD)"],
+      ["y","Y (RD)"],
+      ["z","Z (NAP)"],
+      ["code","Code"]
+    ];
+    const maxCols = Math.max(
+      state.headers ? state.headers.length : 0,
+      state.rawRows.reduce((m, r) => Math.max(m, r.length), 0),
+      1
+    );
+
+    els.mappingArea.innerHTML = "";
+    labels.forEach(([key,label]) => {
+      const wrap = document.createElement("div");
+      wrap.className = "field";
+      const lab = document.createElement("label");
+      lab.textContent = label;
+      const select = document.createElement("select");
+      select.dataset.mapkey = key;
+
+      for (let i=0; i<maxCols; i++) {
+        const opt = document.createElement("option");
+        opt.value = String(i);
+        const name = state.headers?.[i] ? `Kolom ${i+1}: ${state.headers[i]}` : `Kolom ${i+1}`;
+        opt.textContent = name;
+        if (Number(mapping[key]) === i) opt.selected = true;
+        select.appendChild(opt);
+      }
+      select.addEventListener("change", rebuildPoints);
+      wrap.appendChild(lab);
+      wrap.appendChild(select);
+      els.mappingArea.appendChild(wrap);
+    });
+
+    els.mappingHint.textContent = state.headers
+      ? "Headerregel herkend. Pas de kolommen hieronder aan wanneer je bestand anders is opgebouwd."
+      : "Geen headerregel herkend. De eerste 5 kolommen zijn voorlopig gebruikt; pas de indeling zo nodig aan.";
+  }
+
+  function currentMapping() {
+    const map = {};
+    els.mappingArea.querySelectorAll("select[data-mapkey]").forEach(s => {
+      map[s.dataset.mapkey] = Number(s.value);
+    });
+    return map;
+  }
+
+  function rebuildPoints() {
+    const m = currentMapping();
+    const oldSelectedIds = new Set(state.selected);
+
+    state.points = state.rawRows.map((row, index) => {
+      const pointNo = String(row[m.point] ?? "").trim();
+      const x = parseFlexibleNumber(row[m.x]);
+      const y = parseFlexibleNumber(row[m.y]);
+      const z = parseFlexibleNumber(row[m.z]);
+      const code = String(row[m.code] ?? "").trim();
+
+      return {
+        id: index,
+        pointNo: pointNo || `REGEL-${index+1}`,
+        x, y, z,
+        code,
+        raw: row,
+        duplicateNumber: false,
+        duplicateXY: false,
+        selected: oldSelectedIds.has(index)
+      };
+    }).filter(p => p.pointNo !== "" || Number.isFinite(p.x) || Number.isFinite(p.y) || Number.isFinite(p.z));
+
+    state.selected = new Set(state.points.filter(p => p.selected).map(p => p.id));
+    scanDuplicates(false);
+    renderAll();
+  }
+
+  function scanDuplicates(showMessage=true) {
+    const byNr = new Map();
+    const byXY = new Map();
+
+    state.points.forEach(p => {
+      p.duplicateNumber = false;
+      p.duplicateXY = false;
+
+      const nr = p.pointNo.trim().toLowerCase();
+      if (nr) {
+        if (!byNr.has(nr)) byNr.set(nr, []);
+        byNr.get(nr).push(p);
+      }
+
+      if (Number.isFinite(p.x) && Number.isFinite(p.y)) {
+        const key = `${p.x.toFixed(6)}|${p.y.toFixed(6)}`;
+        if (!byXY.has(key)) byXY.set(key, []);
+        byXY.get(key).push(p);
+      }
+    });
+
+    let dupNrGroups = 0, dupNrPoints = 0, dupXYGroups = 0, dupXYPoints = 0;
+
+    byNr.forEach(arr => {
+      if (arr.length > 1) {
+        dupNrGroups++;
+        dupNrPoints += arr.length;
+        arr.forEach(p => p.duplicateNumber = true);
+      }
+    });
+
+    byXY.forEach(arr => {
+      if (arr.length > 1) {
+        dupXYGroups++;
+        dupXYPoints += arr.length;
+        arr.forEach(p => p.duplicateXY = true);
+      }
+    });
+
+    state.duplicatesScanned = true;
+    els.duplicateInfo.textContent =
+      `${dupNrGroups} groepen met dubbel puntnummer (${dupNrPoints} punten) · ` +
+      `${dupXYGroups} groepen met identieke XY (${dupXYPoints} punten)`;
+
+    if (showMessage) setStatus("Duplicatenscan uitgevoerd", (dupNrGroups || dupXYGroups) ? "warn" : "ok");
+    return {dupNrGroups, dupNrPoints, dupXYGroups, dupXYPoints};
+  }
+
+  function pointStatus(p) {
+    const flags = [];
+    if (p.duplicateNumber) flags.push(`<span class="flag">Dubbel nr.</span>`);
+    if (p.duplicateXY) flags.push(`<span class="flag">Dubbel XY</span>`);
+    if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) flags.push(`<span class="flag">Ongeldige XY</span>`);
+    if (!Number.isFinite(p.z)) flags.push(`<span class="flag">Geen Z</span>`);
+    return flags.join(" ") || `<span style="color:#7f8da3">OK</span>`;
+  }
+
+  function getVisiblePoints() {
+    const search = els.tableSearch.value.trim().toLowerCase();
+    const codePattern = els.codeFilter.value.trim();
+    return state.points.filter(p => {
+      const hay = `${p.pointNo} ${p.code} ${p.x} ${p.y} ${p.z}`.toLowerCase();
+      const searchOk = !search || hay.includes(search);
+      const codeOk = !state.codeFilterApplied || !codePattern || matchCodePattern(p.code, codePattern);
+      return searchOk && codeOk;
+    });
+  }
+
+  function renderTable() {
+    els.pointTableBody.innerHTML = "";
+
+    if (!state.points.length) {
+      els.tableEmpty.style.display = "flex";
+      els.tableWrap.style.display = "none";
+      return;
+    }
+
+    els.tableEmpty.style.display = "none";
+    els.tableWrap.style.display = "block";
+
+    state.points.forEach(p => {
+      const tr = document.createElement("tr");
+      tr.dataset.id = p.id;
+      if (state.selected.has(p.id)) tr.classList.add("selected");
+      if (p.duplicateNumber || p.duplicateXY) tr.classList.add("duplicate");
+
+      const c0 = document.createElement("td");
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = state.selected.has(p.id);
+      cb.title = `Selecteer ${p.pointNo}`;
+      cb.addEventListener("change", () => {
+        if (cb.checked) state.selected.add(p.id);
+        else state.selected.delete(p.id);
+        renderSelectionOnly();
+      });
+      c0.appendChild(cb);
+
+      const c1 = document.createElement("td");
+      c1.textContent = p.pointNo;
+
+      const c2 = document.createElement("td"); c2.className = "num"; c2.textContent = formatNumber(p.x);
+      const c3 = document.createElement("td"); c3.className = "num"; c3.textContent = formatNumber(p.y);
+      const c4 = document.createElement("td"); c4.className = "num"; c4.textContent = formatNumber(p.z);
+      const c5 = document.createElement("td"); c5.className = "code"; c5.textContent = p.code;
+      const c6 = document.createElement("td"); c6.innerHTML = pointStatus(p);
+
+      tr.append(c0,c1,c2,c3,c4,c5,c6);
+      els.pointTableBody.appendChild(tr);
+    });
+
+    applyTableFilters();
+  }
+
+  function renderSelectionOnly() {
+    state.points.forEach(p => {
+      const tr = els.pointTableBody.querySelector(`tr[data-id="${p.id}"]`);
+      if (!tr) return;
+      tr.classList.toggle("selected", state.selected.has(p.id));
+      const cb = tr.querySelector('input[type="checkbox"]');
+      if (cb) cb.checked = state.selected.has(p.id);
+    });
+    updateStats();
+    updateMap();
+    updateHeaderCheckbox();
+  }
+
+  function applyTableFilters() {
+    const rows = els.pointTableBody.querySelectorAll("tr");
+    const search = els.tableSearch.value.trim().toLowerCase();
+    const codePattern = els.codeFilter.value.trim();
+
+    rows.forEach(tr => {
+      const p = state.points.find(q => String(q.id) === tr.dataset.id);
+      if (!p) return;
+      const hay = `${p.pointNo} ${p.code} ${p.x} ${p.y} ${p.z}`.toLowerCase();
+      const okSearch = !search || hay.includes(search);
+      const okCode = !state.codeFilterApplied || !codePattern || matchCodePattern(p.code, codePattern);
+      tr.classList.toggle("hidden", !(okSearch && okCode));
+    });
+    updateHeaderCheckbox();
+  }
+
+  function updateHeaderCheckbox() {
+    const visible = getVisiblePoints();
+    if (!visible.length) {
+      els.headerCheckbox.checked = false;
+      els.headerCheckbox.indeterminate = false;
+      return;
+    }
+    const selectedVisible = visible.filter(p => state.selected.has(p.id)).length;
+    els.headerCheckbox.checked = selectedVisible === visible.length;
+    els.headerCheckbox.indeterminate = selectedVisible > 0 && selectedVisible < visible.length;
+  }
+
+  function updateStats() {
+    const dup = scanDuplicates(false);
+    els.selectionBadge.textContent = `${state.selected.size} geselecteerd`;
+    els.mTotal.textContent = state.points.length;
+    els.mSelected.textContent = state.selected.size;
+    els.mDupNr.textContent = dup.dupNrPoints;
+    els.mDupXY.textContent = dup.dupXYPoints;
+
+    els.statsBadges.innerHTML = "";
+    const items = [
+      [`${state.points.length} punten`, ""],
+      [`${state.selected.size} geselecteerd`, state.selected.size ? "ok" : ""],
+      [`${dup.dupNrPoints} dubbel nr.`, dup.dupNrPoints ? "danger" : "ok"],
+      [`${dup.dupXYPoints} identieke XY`, dup.dupXYPoints ? "danger" : "ok"],
+    ];
+    items.forEach(([txt,cls]) => {
+      const b = document.createElement("span");
+      b.className = "badge " + cls;
+      b.textContent = txt;
+      els.statsBadges.appendChild(b);
+    });
+
+    if (dup.dupNrPoints || dup.dupXYPoints) {
+      els.overviewAlert.style.display = "block";
+      els.overviewAlert.className = "alert warn";
+      els.overviewAlert.textContent = "Er zijn punten gevonden die mogelijk dubbel zijn. Controleer deze vóór export.";
+    } else {
+      els.overviewAlert.style.display = "block";
+      els.overviewAlert.className = "alert ok";
+      els.overviewAlert.textContent = state.points.length ? "Geen dubbele puntnummers of identieke XY-coördinaten gevonden." : "";
+      if (!state.points.length) els.overviewAlert.style.display = "none";
+    }
+  }
+
+  function renderAll() {
+    renderTable();
+    updateStats();
+    updateMap();
+    updateHeaderCheckbox();
+    updateFileMeta();
+  }
+
+  function formatNumber(v) {
+    return Number.isFinite(v) ? v.toLocaleString("nl-NL", {minimumFractionDigits:3, maximumFractionDigits:6}) : "—";
+  }
+
+  function selectAll(select) {
+    if (select) state.points.forEach(p => state.selected.add(p.id));
+    else state.selected.clear();
+    renderSelectionOnly();
+  }
+
+  function toggleCodeSelection(select) {
+    const codePattern = els.codeFilter.value.trim();
+    if (!codePattern) return;
+    state.points.forEach(p => {
+      const match = matchCodePattern(p.code, codePattern);
+      if (match) {
+        if (select) state.selected.add(p.id);
+        else state.selected.delete(p.id);
+      }
+    });
+    renderSelectionOnly();
+  }
+
+  function rdToWgs84(x, y) {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+
+    const dX = (x - 155000) * 1e-5;
+    const dY = (y - 463000) * 1e-5;
+
+    const latCorrection =
+      (3235.65389 * dY)
+      - (32.58297 * Math.pow(dX, 2))
+      - (0.2475 * Math.pow(dY, 2))
+      - (0.84978 * Math.pow(dX, 2) * dY)
+      - (0.0655 * Math.pow(dY, 3))
+      - (0.01709 * Math.pow(dX, 2) * Math.pow(dY, 2))
+      - (0.00738 * dX)
+      + (0.0053 * Math.pow(dX, 4))
+      - (0.00039 * Math.pow(dY, 4))
+      + (0.00033 * Math.pow(dX, 4) * dY)
+      - (0.00012 * dX * dY);
+
+    const lonCorrection =
+      (5260.52916 * dX)
+      + (105.94684 * dX * dY)
+      + (2.45656 * dX * Math.pow(dY, 2))
+      - (0.81885 * Math.pow(dX, 3))
+      + (0.05594 * dX * Math.pow(dY, 3))
+      - (0.05607 * Math.pow(dX, 3) * dY)
+      + (0.01199 * dY)
+      - (0.00256 * Math.pow(dX, 3) * Math.pow(dY, 2))
+      + (0.00128 * dX * dY)
+      + (0.00022 * Math.pow(dY, 2))
+      - (0.00022 * Math.pow(dX, 2))
+      + (0.00026 * Math.pow(dX, 5));
+
+    const lat = 52.15517440 + latCorrection / 3600;
+    const lon = 5.38720621 + lonCorrection / 3600;
+    return {lat, lon};
+  }
+
+  function initMap() {
+    state.map = L.map("map", { zoomControl:true, preferCanvas:true }).setView([52.2, 5.3], 8);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(state.map);
+
+    state.markerLayer = L.layerGroup().addTo(state.map);
+    setTimeout(() => state.map.invalidateSize(), 250);
+  }
+
+  function updateMap() {
+    if (!state.map || !state.markerLayer) return;
+    state.markerLayer.clearLayers();
+    state.markers.clear();
+
+    const selected = state.points.filter(p => state.selected.has(p.id));
+    const bounds = [];
+
+    selected.forEach(p => {
+      const ll = rdToWgs84(p.x, p.y);
+      if (!ll || !Number.isFinite(ll.lat) || !Number.isFinite(ll.lon)) return;
+
+      const dup = p.duplicateNumber || p.duplicateXY;
+      const marker = L.circleMarker([ll.lat,ll.lon], {
+        radius: 7,
+        weight: 2,
+        color: dup ? "#ef6a6a" : "#d9a441",
+        fillColor: dup ? "#ef6a6a" : "#d9a441",
+        fillOpacity: 0.82
+      });
+
+      marker.bindPopup(
+        `<strong>${escapeHtml(p.pointNo)}</strong><br>` +
+        `X: ${formatExportNumber(p.x, 3)}<br>` +
+        `Y: ${formatExportNumber(p.y, 3)}<br>` +
+        `Z: ${formatExportNumber(p.z, 3)}<br>` +
+        `Code: ${escapeHtml(p.code || "—")}`
+      );
+
+      marker.addTo(state.markerLayer);
+      state.markers.set(p.id, marker);
+      bounds.push([ll.lat,ll.lon]);
+    });
+
+    if (bounds.length === 1) {
+      state.map.setView(bounds[0], 17);
+    } else if (bounds.length > 1) {
+      state.map.fitBounds(bounds, {padding:[30,30], maxZoom:18});
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? "").replace(/[&<>"']/g, ch => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[ch]));
+  }
+
+  function selectedPointsOrAlert() {
+    const pts = state.points.filter(p => state.selected.has(p.id));
+    if (!pts.length) {
+      alert("Selecteer eerst minimaal één punt.");
+      return null;
+    }
+    return pts;
+  }
+
+  function formatExportNumber(v, decimals) {
+    if (!Number.isFinite(v)) return "";
+    return Number(v).toFixed(Math.max(0, Math.min(8, Number(decimals) || 0)));
+  }
+
+  function buildTxt() {
+    const pts = selectedPointsOrAlert();
+    if (!pts) return null;
+
+    const sep = delimiterChar(els.exportDelimiter.value);
+    const decimals = Number(els.exportDecimals.value) || 3;
+    const header = ["Puntnummer","X","Y","Z","Code"].join(sep);
+
+    const lines = [header];
+    pts.forEach(p => {
+      lines.push([
+        p.pointNo,
+        formatExportNumber(p.x, decimals),
+        formatExportNumber(p.y, decimals),
+        formatExportNumber(p.z, decimals),
+        p.code
+      ].join(sep));
+    });
+    return lines.join("\r\n") + "\r\n";
+  }
+
+  function downloadBlob(content, filename, type) {
+    const blob = new Blob([content], {type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function baseFileName() {
+    const custom = document.getElementById("exportName")?.value?.trim();
+    const raw = custom || (state.fileName || "meetdata").replace(/\.[^.]+$/, "");
+    return raw.replace(/[^\w\- áéèëïöüÁÉÈËÏÖÜ]+/g,"_").replace(/\s+/g,"_") || "meetdata";
+  }
+
+  function exportTxt() {
+    const txt = buildTxt();
+    if (txt == null) return;
+    downloadBlob(txt, `${baseFileName()}_controle.txt`, "text/plain;charset=utf-8");
+    setStatus("TXT geëxporteerd", "ok");
+  }
+
+  function exportKml() {
+    const pts = selectedPointsOrAlert();
+    if (!pts) return;
+
+    const mode = els.kmlHeightMode.value;
+    const placemarks = [];
+
+    pts.forEach(p => {
+      const ll = rdToWgs84(p.x,p.y);
+      if (!ll) return;
+
+      let height = 0;
+      if (mode === "absolute") height = Number.isFinite(p.z) ? p.z : 0;
+      if (mode === "clamp") height = Number.isFinite(p.z) ? Math.max(0,p.z) : 0;
+
+      placemarks.push(`
+    <Placemark>
+      <name>${escapeXml(p.pointNo)}</name>
+      <description>${escapeXml(
+        `Code: ${p.code || ""}\\nX RD: ${formatExportNumber(p.x,3)}\\nY RD: ${formatExportNumber(p.y,3)}\\nZ NAP: ${formatExportNumber(p.z,3)}`
+      )}</description>
+      <ExtendedData>
+        <Data name="puntnummer"><value>${escapeXml(p.pointNo)}</value></Data>
+        <Data name="code"><value>${escapeXml(p.code || "")}</value></Data>
+        <Data name="x_rd"><value>${escapeXml(formatExportNumber(p.x,3))}</value></Data>
+        <Data name="y_rd"><value>${escapeXml(formatExportNumber(p.y,3))}</value></Data>
+        <Data name="z_nap"><value>${escapeXml(formatExportNumber(p.z,3))}</value></Data>
+      </ExtendedData>
+      <Point>
+        <altitudeMode>absolute</altitudeMode>
+        <coordinates>${ll.lon.toFixed(8)},${ll.lat.toFixed(8)},${height.toFixed(3)}</coordinates>
+      </Point>
+    </Placemark>`);
+    });
+
+    const kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>${escapeXml(state.fileName || "Meetdata")}</name>
+    <open>1</open>
+    <Style id="pointStyle">
+      <IconStyle>
+        <scale>1.0</scale>
+      </IconStyle>
+    </Style>
+    ${placemarks.join("\n")}
+  </Document>
+</kml>`;
+
+    downloadBlob(kml, `${baseFileName()}_punten.kml`, "application/vnd.google-earth.kml+xml;charset=utf-8");
+    setStatus("KML geëxporteerd", "ok");
+  }
+
+  function escapeXml(s) {
+    return String(s ?? "").replace(/[<>&'"]/g, ch => ({
+      "<":"&lt;",">":"&gt;","&":"&amp;","'":"&apos;",'"':"&quot;"
+    }[ch]));
+  }
+
+  function updateFileMeta() {
+    if (!state.fileName) {
+      els.fileMeta.textContent = "Geen bestand geladen.";
+      return;
+    }
+    const delimLabel = ({
+      tab:"Tab", comma:"Komma", space:"Spatie", semicolon:"Puntkomma"
+    })[state.delimiter];
+
+    els.fileMeta.innerHTML =
+      `<b>${escapeHtml(state.fileName)}</b><br>` +
+      `${state.rawRows.length} datarijen · import: ${delimLabel} · ` +
+      `${state.headers ? "header herkend" : "geen header herkend"}`;
+  }
+
+  // --- Events ---
+  els.dropzone.addEventListener("click", () => els.fileInput.click());
+  els.dropzone.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === " ") els.fileInput.click();
+  });
+  els.fileInput.addEventListener("change", e => handleFile(e.target.files[0]));
+
+  ["dragenter","dragover"].forEach(ev => els.dropzone.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation(); els.dropzone.classList.add("dragover");
+  }));
+  ["dragleave","drop"].forEach(ev => els.dropzone.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation(); els.dropzone.classList.remove("dragover");
+  }));
+  els.dropzone.addEventListener("drop", e => {
+    handleFile(e.dataTransfer.files[0]);
+  });
+
+  els.importDelimiter.addEventListener("change", () => {
+    if (!state.fileName) return;
+    const file = els.fileInput.files[0];
+    if (file) handleFile(file);
+  });
+
+  els.filterCodeBtn.addEventListener("click", () => {
+    state.codeFilterApplied = true;
+    applyTableFilters();
+    updateHeaderCheckbox();
+  });
+  els.clearFilterBtn.addEventListener("click", () => {
+    els.codeFilter.value = "";
+    state.codeFilterApplied = false;
+    applyTableFilters();
+  });
+
+  els.codeFilter.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      state.codeFilterApplied = true;
+      applyTableFilters();
+    }
+  });
+
+  els.selectCodeBtn.addEventListener("click", () => toggleCodeSelection(true));
+  els.deselectCodeBtn.addEventListener("click", () => toggleCodeSelection(false));
+
+  els.scanDuplicatesBtn.addEventListener("click", () => {
+    scanDuplicates(true);
+    renderAll();
+  });
+
+  els.markDuplicatesBtn.addEventListener("click", () => {
+    state.points.forEach(p => {
+      if (p.duplicateNumber || p.duplicateXY) state.selected.add(p.id);
+    });
+    renderSelectionOnly();
+    setStatus("Duplicaten geselecteerd", "warn");
+  });
+
+  els.selectAllBtn.addEventListener("click", () => selectAll(true));
+  els.deselectAllBtn.addEventListener("click", () => selectAll(false));
+
+  els.headerCheckbox.addEventListener("change", () => {
+    const visible = getVisiblePoints();
+    if (els.headerCheckbox.checked) visible.forEach(p => state.selected.add(p.id));
+    else visible.forEach(p => state.selected.delete(p.id));
+    renderSelectionOnly();
+  });
+
+  els.tableSearch.addEventListener("input", applyTableFilters);
+
+  els.exportTxtBtn.addEventListener("click", exportTxt);
+  els.exportKmlBtn.addEventListener("click", exportKml);
+
+  window.addEventListener("resize", () => {
+    if (state.map) state.map.invalidateSize();
+  });
+
+  // Start
+  try {
+    initMap();
+  } catch (err) {
+    console.error(err);
+    els.fileMeta.textContent = "Kaart kon niet worden gestart. Controleer of Leaflet via internet beschikbaar is.";
+  }
+})();
+</script>
 </body>
 </html>
