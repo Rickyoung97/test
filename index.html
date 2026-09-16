@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<title>Meetdata Controle — Maatvoerder</title>
+<title>Meetdata Controle & Vergelijking — Maatvoerder</title>
 
 <!-- Leaflet voor de interactieve kaart -->
 <link
@@ -50,6 +50,45 @@ button{cursor:pointer}
 }
 .dot{width:9px;height:9px;border-radius:50%;background:#667085}
 .dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.danger{background:var(--danger)}
+
+/* Tab Navigatie */
+.nav-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 2px;
+  overflow-x: auto;
+}
+.tab-btn {
+  background: var(--panel);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-bottom: none;
+  padding: 10px 18px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all .15s ease-in-out;
+  white-space: nowrap;
+}
+.tab-btn:hover {
+  background: var(--panel2);
+  color: var(--text);
+}
+.tab-btn.active {
+  background: var(--accent);
+  color: #1b160c;
+  border-color: var(--accent);
+}
+
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+}
 
 .grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px}
 .panel{
@@ -137,7 +176,7 @@ input[type="checkbox"]{accent-color:var(--accent);width:18px;height:18px}
 .dropzone.dragover{border-color:var(--accent);background:rgba(217,164,65,.07)}
 .dropzone strong{display:block;margin-bottom:4px}
 .dropzone small{color:var(--muted)}
-#fileInput{display:none}
+#fileInput, #compareFileInput {display:none}
 
 .main{min-width:0}
 .toolbar{
@@ -146,7 +185,7 @@ input[type="checkbox"]{accent-color:var(--accent);width:18px;height:18px}
 }
 .toolbar-left,.toolbar-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .search{width:min(300px,60vw)}
-.table-wrap{overflow:auto;max-height:52vh;min-height:260px}
+.table-wrap{overflow:auto;max-height:60vh;min-height:260px}
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:.83rem}
 thead th{
   position:sticky;top:0;z-index:2;background:#182236;color:#cbd5e1;font-weight:700;
@@ -156,6 +195,7 @@ tbody td{padding:8px;border-bottom:1px solid #1e293b;white-space:nowrap}
 tbody tr:hover{background:rgba(255,255,255,.025)}
 tbody tr.selected{background:rgba(217,164,65,.08)}
 tbody tr.duplicate{background:rgba(239,106,106,.08)}
+tbody tr.out-of-tol{background:rgba(239,106,106,.15)}
 tbody tr.hidden{display:none}
 .num{text-align:right;font-variant-numeric:tabular-nums}
 .code{font-weight:700;letter-spacing:.03em}
@@ -163,11 +203,12 @@ tbody tr.hidden{display:none}
   display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border-radius:6px;font-size:.7rem;
   border:1px solid rgba(239,106,106,.35);color:#ffabab
 }
+.flag.ok{border-color:rgba(65,197,138,.35);color:#9de7c6}
 .empty{
   display:flex;align-items:center;justify-content:center;min-height:240px;color:var(--muted);padding:30px;text-align:center
 }
 .bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
-#map{height:430px;background:#0c1320}
+#map{height:600px;background:#0c1320;border-radius:0 0 var(--radius) var(--radius)}
 .map-note{font-size:.72rem;color:var(--muted);padding:8px 12px;border-top:1px solid var(--line)}
 .map-legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:.75rem;color:var(--muted)}
 .legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px}
@@ -187,10 +228,6 @@ tbody tr.hidden{display:none}
 }
 .mapping-grid .field{margin:0}
 
-.export-panel {
-  margin-top: 16px;
-}
-
 .footer{padding:16px 0 4px;color:#66758d;font-size:.72rem;text-align:center}
 
 @media (max-width:1100px){
@@ -205,7 +242,7 @@ tbody tr.hidden{display:none}
   .bottom-grid{grid-template-columns:1fr}
   .control-grid{grid-template-columns:1fr}
   .mapping-grid{grid-template-columns:1fr 1fr}
-  #map{height:360px}
+  #map{height:400px}
   thead th,tbody td{padding:8px 6px}
 }
 </style>
@@ -216,8 +253,8 @@ tbody tr.hidden{display:none}
   <header class="topbar">
     <div class="topbar-inner">
       <div class="title">
-        <h1>Meetdata Controle</h1>
-        <p>RD2018 · maatvoering · opstart & grondslag</p>
+        <h1>Meetdata Controle & Vergelijking</h1>
+        <p>RD2018 · maatvoering · opstart & controle</p>
       </div>
       <div class="status-pill">
         <span id="statusDot" class="dot"></span>
@@ -226,29 +263,37 @@ tbody tr.hidden{display:none}
     </div>
   </header>
 
-  <div class="grid">
-    <aside class="panel">
-      <div class="panel-header">Import & controle</div>
-      
-      <!-- Sectie 1 (Inklapbaar) -->
-      <details class="control-section" open>
-        <summary>1 · Meetbestand</summary>
-        <div class="section-content">
-          <div id="dropzone" class="dropzone" tabindex="0">
-            <strong>Sleep hier je meetbestand heen</strong>
-            <small>of tik om .txt, .csv, .asc of vergelijkbare tekstdata te kiezen</small>
-            <input id="fileInput" type="file" accept=".txt,.csv,.asc,.dat,.log,.prn,text/plain,text/csv">
-          </div>
-        </div>
-      </details>
+  <!-- Navigatie Tabs -->
+  <nav class="nav-tabs">
+    <button class="tab-btn active" onclick="openTab('tab-import')">1. Import & Controle</button>
+    <button class="tab-btn" onclick="openTab('tab-points')">2. Puntenoverzicht</button>
+    <button class="tab-btn" onclick="openTab('tab-map')">3. Kaartweergave</button>
+    <button class="tab-btn" onclick="openTab('tab-compare')">4. Uitzetdata Vergelijken</button>
+    <button class="tab-btn" onclick="openTab('tab-export')">5. Export</button>
+  </nav>
 
-      <!-- Sectie 2 (Inklapbaar) -->
-      <details class="control-section">
-        <summary>2 · Scheidingsteken</summary>
-        <div class="section-content">
-          <div class="control-grid">
+  <!-- TAB 1: IMPORT & CONTROLE -->
+  <div id="tab-import" class="tab-content active">
+    <div class="grid">
+      <aside class="panel">
+        <div class="panel-header">Import-instellingen</div>
+        
+        <details class="control-section" open>
+          <summary>1 · Oorspronkelijk Meetbestand</summary>
+          <div class="section-content">
+            <div id="dropzone" class="dropzone" tabindex="0">
+              <strong>Sleep hier je hoofd-meetbestand heen</strong>
+              <small>of tik om .txt, .csv, .asc of data te kiezen</small>
+              <input id="fileInput" type="file" accept=".txt,.csv,.asc,.dat,.log,.prn,text/plain,text/csv">
+            </div>
+          </div>
+        </details>
+
+        <details class="control-section" open>
+          <summary>2 · Scheidingsteken</summary>
+          <div class="section-content">
             <div class="field">
-              <label for="importDelimiter">Import</label>
+              <label for="importDelimiter">Import scheidingsteken</label>
               <select id="importDelimiter">
                 <option value="tab">Tab</option>
                 <option value="comma">Komma</option>
@@ -256,63 +301,80 @@ tbody tr.hidden{display:none}
                 <option value="semicolon">Puntkomma</option>
               </select>
             </div>
-            <div class="field">
-              <label for="exportDelimiter">TXT-export</label>
-              <select id="exportDelimiter">
-                <option value="tab">Tab</option>
-                <option value="comma">Komma</option>
-                <option value="space">Spatie</option>
-                <option value="semicolon">Puntkomma</option>
-              </select>
+            <div class="hint">RD2018: X = Oosting, Y = Noording, Z = NAP.</div>
+          </div>
+        </details>
+
+        <details class="control-section" open>
+          <summary>3 · Kolomindeling</summary>
+          <div class="section-content">
+            <div id="mappingArea" class="mapping-grid"></div>
+            <div id="mappingHint" class="hint" style="margin-top:8px">Laad eerst een bestand.</div>
+          </div>
+        </details>
+
+        <details class="control-section">
+          <summary>4 · Duplicaten Controle</summary>
+          <div class="section-content">
+            <div class="row wrap">
+              <button id="scanDuplicatesBtn" class="btn small warn">Scan opnieuw</button>
+              <button id="markDuplicatesBtn" class="btn small danger">Selecteer duplicaten</button>
+            </div>
+            <div id="duplicateInfo" class="hint" style="margin-top:8px">Nog geen scan uitgevoerd.</div>
+          </div>
+        </details>
+      </aside>
+
+      <main class="panel">
+        <div class="panel-header">Controle & Status Overzicht</div>
+        <div class="panel-body">
+          <div class="control-grid">
+            <div class="metric"><strong id="mTotal">0</strong><span>Totaal punten</span></div>
+            <div class="metric"><strong id="mSelected">0</strong><span>Geselecteerd</span></div>
+            <div class="metric"><strong id="mDupNr">0</strong><span>Dubbel puntnummer</span></div>
+            <div class="metric"><strong id="mDupXY">0</strong><span>Identieke XY</span></div>
+          </div>
+          <div id="overviewAlert" class="alert" style="display:none"></div>
+
+          <div class="section-title" style="margin-top:16px; font-weight:700;">RD → WGS84 Formule</div>
+          <div class="hint">
+            De kaart gebruikt een inverse RD-transformatie.
+            De oorspronkelijke RD-coördinaten in de tabel blijven ongewijzigd.
+          </div>
+          
+          <div class="section-title" style="margin-top:16px; font-weight:700;">Geladen Bestand Details</div>
+          <div id="fileMeta" class="hint">Geen bestand geladen.</div>
+          
+          <div class="badges" id="statsBadges" style="margin-top:16px">
+            <span class="badge">Geen data</span>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- TAB 2: PUNTENOVERZICHT -->
+  <div id="tab-points" class="tab-content">
+    <main class="panel main">
+      <!-- Wildcard & Code-filter balk -->
+      <details class="control-section" open style="background:var(--panel2)">
+        <summary>Filteren & Wildcards</summary>
+        <div class="section-content" style="padding-top:10px;">
+          <div class="row wrap" style="gap:12px">
+            <div class="field" style="flex:1; min-width:240px; margin:0">
+              <label for="codeFilter">Code bevat (wildcards * en ? en komma's toegestaan)</label>
+              <input id="codeFilter" type="text" placeholder="bijv. *ST*, *GD*, *RL*">
+            </div>
+            <div class="row wrap" style="align-self:flex-end">
+              <button id="filterCodeBtn" class="btn primary small">Filter toepassen</button>
+              <button id="clearFilterBtn" class="btn small">Wis filter</button>
+              <button id="selectCodeBtn" class="btn small ok">Selecteer match</button>
+              <button id="deselectCodeBtn" class="btn small danger">Deselecteer match</button>
             </div>
           </div>
-          <div class="hint">RD2018: X = Oosting, Y = Noording, Z = NAP.</div>
         </div>
       </details>
 
-      <!-- Sectie 3 (Inklapbaar) -->
-      <details class="control-section">
-        <summary>3 · Kolomindeling</summary>
-        <div class="section-content">
-          <div id="mappingArea" class="mapping-grid"></div>
-          <div id="mappingHint" class="hint" style="margin-top:8px">Laad eerst een bestand.</div>
-        </div>
-      </details>
-
-      <!-- Sectie 4 (Inklapbaar) -->
-      <details class="control-section">
-        <summary>4 · Code-filter</summary>
-        <div class="section-content">
-          <div class="field">
-            <label for="codeFilter">Code bevat (wildcards & komma's toegestaan)</label>
-            <input id="codeFilter" type="text" placeholder="bijv. *ST*, *GD*, *RL*">
-          </div>
-          <div class="row wrap">
-            <button id="filterCodeBtn" class="btn small">Filter tabel</button>
-            <button id="clearFilterBtn" class="btn small">Wis filter</button>
-          </div>
-          <div class="row wrap" style="margin-top:8px">
-            <button id="selectCodeBtn" class="btn small">Selecteer match</button>
-            <button id="deselectCodeBtn" class="btn small">Deselecteer match</button>
-          </div>
-        </div>
-      </details>
-
-      <!-- Sectie 5 (Inklapbaar) -->
-      <details class="control-section">
-        <summary>5 · Duplicaten</summary>
-        <div class="section-content">
-          <div class="row wrap">
-            <button id="scanDuplicatesBtn" class="btn small warn">Scan opnieuw</button>
-            <button id="markDuplicatesBtn" class="btn small danger">Selecteer duplicaten</button>
-          </div>
-          <div id="duplicateInfo" class="hint" style="margin-top:8px">Nog geen scan uitgevoerd.</div>
-        </div>
-      </details>
-
-    </aside>
-
-    <main class="panel main">
       <div class="toolbar" style="padding:14px 12px;background:#172033">
         <div class="toolbar-left">
           <button id="selectAllBtn" class="btn primary small">✓ Selecteer alles</button>
@@ -344,18 +406,13 @@ tbody tr.hidden{display:none}
           <tbody id="pointTableBody"></tbody>
         </table>
       </div>
-
-      <div class="panel-body" style="border-top:1px solid var(--line)">
-        <div class="badges" id="statsBadges">
-          <span class="badge">Geen data</span>
-        </div>
-      </div>
     </main>
   </div>
 
-  <div class="bottom-grid">
+  <!-- TAB 3: KAARTWEERGAVE -->
+  <div id="tab-map" class="tab-content">
     <section class="panel">
-      <div class="panel-header">Kaart · geselecteerde punten</div>
+      <div class="panel-header">Kaart · Geselecteerde punten</div>
       <div id="map"></div>
       <div class="map-note">
         <div class="map-legend">
@@ -365,63 +422,125 @@ tbody tr.hidden{display:none}
         </div>
       </div>
     </section>
-
-    <section class="panel">
-      <div class="panel-header">Controle-overzicht</div>
-      <div class="panel-body">
-        <div class="control-grid">
-          <div class="metric"><strong id="mTotal">0</strong><span>Totaal punten</span></div>
-          <div class="metric"><strong id="mSelected">0</strong><span>Geselecteerd</span></div>
-          <div class="metric"><strong id="mDupNr">0</strong><span>Dubbel puntnummer</span></div>
-          <div class="metric"><strong id="mDupXY">0</strong><span>Identieke XY</span></div>
-        </div>
-        <div id="overviewAlert" class="alert" style="display:none"></div>
-
-        <div class="section-title" style="margin-top:16px">RD → WGS84</div>
-        <div class="hint">
-          De kaart gebruikt een ingebouwde inverse RD-formule voor de Nederlandse Rijksdriehoekscoördinaten.
-          De oorspronkelijke RD-data in de tabel blijft ongewijzigd.
-        </div>
-        <div class="section-title">Bestand</div>
-        <div id="fileMeta" class="hint">Geen bestand geladen.</div>
-      </div>
-    </section>
   </div>
 
-  <!-- Sectie 6 (Export - Onderaan de pagina) -->
-  <section class="panel export-panel">
-    <div class="panel-header">6 · Export</div>
-    <div class="panel-body">
-      <div class="field">
-        <label for="exportName">Naam voor exportbestand</label>
-        <input id="exportName" type="text" placeholder="bijv. grondslag_project_01">
-      </div>
-      <div class="control-grid">
-        <div class="field">
-          <label for="exportDecimals">Decimalen X/Y/Z</label>
-          <input id="exportDecimals" type="number" min="0" max="8" step="1" value="3">
+  <!-- TAB 4: UITZETDATA VERGELIJKING (NIEUW) -->
+  <div id="tab-compare" class="tab-content">
+    <div class="grid">
+      <aside class="panel">
+        <div class="panel-header">Uitzetdata Inlezen & Toleranties</div>
+        <div class="panel-body">
+          <div class="field">
+            <label>Gemeten / Uitzetbestand</label>
+            <div id="compareDropzone" class="dropzone" tabindex="0">
+              <strong>Sleep je uitzet-meetbestand</strong>
+              <small>Vergelijkt op basis van Puntnummer</small>
+              <input id="compareFileInput" type="file" accept=".txt,.csv,.asc,.dat,.log,.prn,text/plain,text/csv">
+            </div>
+          </div>
+          
+          <div class="field" style="margin-top:12px">
+            <label for="compareDelimiter">Scheidingsteken uitzetdata</label>
+            <select id="compareDelimiter">
+              <option value="tab">Tab</option>
+              <option value="comma">Komma</option>
+              <option value="space">Spatie</option>
+              <option value="semicolon">Puntkomma</option>
+            </select>
+          </div>
+
+          <div class="section-title" style="margin-top:16px; font-weight:700;">Toleranties (meters)</div>
+          <div class="control-grid">
+            <div class="field">
+              <label for="tol2d">Max 2D Afwijking (m)</label>
+              <input id="tol2d" type="number" step="0.001" value="0.015">
+            </div>
+            <div class="field">
+              <label for="tolZ">Max Z Afwijking (m)</label>
+              <input id="tolZ" type="number" step="0.001" value="0.020">
+            </div>
+          </div>
+
+          <button id="runCompareBtn" class="btn primary full" style="margin-top:12px">Vergelijk Gegevens</button>
         </div>
+      </aside>
+
+      <main class="panel main">
+        <div class="panel-header">Vergelijkingsresultaten (Gemeten vs Oorspronkelijk)</div>
+        
+        <div id="compareEmpty" class="empty">
+          Laad een uitzetbestand om de afwijkingen ($\Delta X, \Delta Y, \Delta Z$) te berekenen.
+        </div>
+
+        <div id="compareTableWrap" class="table-wrap" style="display:none">
+          <table>
+            <thead>
+              <tr>
+                <th>Puntnummer</th>
+                <th class="num">dX (m)</th>
+                <th class="num">dY (m)</th>
+                <th class="num">dZ (m)</th>
+                <th class="num">d2D (m)</th>
+                <th class="num">d3D (m)</th>
+                <th>Status / Tolerantie</th>
+              </tr>
+            </thead>
+            <tbody id="compareTableBody"></tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- TAB 5: EXPORT -->
+  <div id="tab-export" class="tab-content">
+    <section class="panel export-panel">
+      <div class="panel-header">Export Opties</div>
+      <div class="panel-body">
         <div class="field">
-          <label for="kmlHeightMode">KML hoogte</label>
+          <label for="exportName">Naam voor exportbestand</label>
+          <input id="exportName" type="text" placeholder="bijv. grondslag_project_01">
+        </div>
+
+        <div class="control-grid">
+          <div class="field">
+            <label for="exportDelimiter">TXT-export Scheidingsteken</label>
+            <select id="exportDelimiter">
+              <option value="tab">Tab</option>
+              <option value="comma">Komma</option>
+              <option value="space">Spatie</option>
+              <option value="semicolon">Puntkomma</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="exportDecimals">Decimalen X/Y/Z</label>
+            <input id="exportDecimals" type="number" min="0" max="8" step="1" value="3">
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:9px">
+          <label for="kmlHeightMode">KML Hoogtemodus</label>
           <select id="kmlHeightMode">
             <option value="absolute">NAP als absolute hoogte</option>
             <option value="clamp">NAP + clamp op 0 m</option>
             <option value="0">Geen hoogte (0 m)</option>
           </select>
         </div>
+
+        <div class="row wrap" style="margin-top:16px">
+          <button id="exportTxtBtn" class="btn ok">Exporteer Geselecteerde TXT</button>
+          <button id="exportKmlBtn" class="btn primary">Exporteer Geselecteerde KML</button>
+          <button id="exportCompareTxtBtn" class="btn warn">Exporteer Vergelijkingsrapport (TXT)</button>
+        </div>
+        <div class="hint" style="margin-top:10px">
+          Alleen de geselecteerde punten worden meegenomen in de standaard TXT/KML export.
+        </div>
       </div>
-      <div class="row wrap" style="margin-top:10px">
-        <button id="exportTxtBtn" class="btn ok">Exporteer TXT</button>
-        <button id="exportKmlBtn" class="btn primary">Exporteer KML</button>
-      </div>
-      <div class="hint" style="margin-top:7px">
-        Alleen geselecteerde punten worden geëxporteerd.
-      </div>
-    </div>
-  </section>
+    </section>
+  </div>
 
   <div class="footer">
-    Meetdata Controle · single-file HTML/JS · geschikt voor laptop, tablet en telefoon
+    Meetdata Controle & Vergelijking · single-file HTML/JS · Geschikt voor laptop, tablet en telefoon
   </div>
 </div>
 
@@ -430,6 +549,24 @@ tbody tr.hidden{display:none}
         crossorigin=""></script>
 
 <script>
+// Tab Swapping Logica
+function openTab(tabId) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  
+  document.getElementById(tabId).classList.add('active');
+  const btn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+  if(btn) btn.classList.add('active');
+
+  // Herteken kaart als we naar de kaart-tab navigeren
+  if (tabId === 'tab-map' && window.state && window.state.map) {
+    setTimeout(() => {
+      window.state.map.invalidateSize();
+      window.updateMap();
+    }, 150);
+  }
+}
+
 (() => {
   "use strict";
 
@@ -445,14 +582,25 @@ tbody tr.hidden{display:none}
     duplicatesScanned: false,
     map: null,
     markers: new Map(),
-    markerLayer: null
+    markerLayer: null,
+
+    // Uitzetdata state
+    compareRawContent: "",
+    comparePoints: [],
+    compareResults: []
   };
+
+  window.state = state;
 
   const $ = id => document.getElementById(id);
 
   const els = {
     dropzone: $("dropzone"),
     fileInput: $("fileInput"),
+    compareDropzone: $("compareDropzone"),
+    compareFileInput: $("compareFileInput"),
+    compareDelimiter: $("compareDelimiter"),
+    runCompareBtn: $("runCompareBtn"),
     importDelimiter: $("importDelimiter"),
     exportDelimiter: $("exportDelimiter"),
     mappingArea: $("mappingArea"),
@@ -467,6 +615,7 @@ tbody tr.hidden{display:none}
     duplicateInfo: $("duplicateInfo"),
     exportTxtBtn: $("exportTxtBtn"),
     exportKmlBtn: $("exportKmlBtn"),
+    exportCompareTxtBtn: $("exportCompareTxtBtn"),
     exportDecimals: $("exportDecimals"),
     kmlHeightMode: $("kmlHeightMode"),
     selectAllBtn: $("selectAllBtn"),
@@ -485,7 +634,12 @@ tbody tr.hidden{display:none}
     overviewAlert: $("overviewAlert"),
     fileMeta: $("fileMeta"),
     statusDot: $("statusDot"),
-    statusText: $("statusText")
+    statusText: $("statusText"),
+    compareEmpty: $("compareEmpty"),
+    compareTableWrap: $("compareTableWrap"),
+    compareTableBody: $("compareTableBody"),
+    tol2d: $("tol2d"),
+    tolZ: $("tolZ")
   };
 
   function wildcardToRegExp(pattern) {
@@ -1026,7 +1180,6 @@ tbody tr.hidden{display:none}
     }).addTo(state.map);
 
     state.markerLayer = L.layerGroup().addTo(state.map);
-    setTimeout(() => state.map.invalidateSize(), 250);
   }
 
   function updateMap() {
@@ -1069,6 +1222,8 @@ tbody tr.hidden{display:none}
       state.map.fitBounds(bounds, {padding:[30,30], maxZoom:18});
     }
   }
+
+  window.updateMap = updateMap;
 
   function escapeHtml(s) {
     return String(s ?? "").replace(/[&<>"']/g, ch => ({
@@ -1210,6 +1365,143 @@ tbody tr.hidden{display:none}
       `${state.headers ? "header herkend" : "geen header herkend"}`;
   }
 
+  // --- UITZETDATA VERGELIJKING METINGEN ---
+  function handleCompareFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        state.compareRawContent = String(reader.result || "");
+        parseCompareFileText(state.compareRawContent);
+      } catch (err) {
+        console.error(err);
+        alert("Fout bij het lezen van het vergelijkingsbestand.");
+      }
+    };
+    reader.readAsText(file, "UTF-8");
+  }
+
+  function parseCompareFileText(text) {
+    const delim = delimiterChar(els.compareDelimiter.value);
+    const lines = text.split(/\r?\n/).map(s=>s.trim()).filter(s => s !== "" && !/^\s*(#|\/\/)/.test(s));
+    
+    const rows = lines.map(line => parseDelimitedLine(line, delim));
+    if (looksLikeHeader(rows[0])) rows.shift();
+
+    state.comparePoints = rows.map(r => ({
+      pointNo: String(r[0] ?? "").trim(),
+      x: parseFlexibleNumber(r[1]),
+      y: parseFlexibleNumber(r[2]),
+      z: parseFlexibleNumber(r[3])
+    })).filter(p => p.pointNo && Number.isFinite(p.x) && Number.isFinite(p.y));
+
+    runComparison();
+  }
+
+  function runComparison() {
+    if (!state.points.length) {
+      alert("Laad eerst het oorspronkelijke bestand bij Tab 1.");
+      return;
+    }
+    if (!state.comparePoints.length) {
+      alert("Laad eerst een geldig uitzetbestand in.");
+      return;
+    }
+
+    const origMap = new Map();
+    state.points.forEach(p => origMap.set(p.pointNo.trim().toLowerCase(), p));
+
+    const maxTol2D = Number(els.tol2d.value) || 0.015;
+    const maxTolZ = Number(els.tolZ.value) || 0.020;
+
+    state.compareResults = [];
+
+    state.comparePoints.forEach(cp => {
+      const orig = origMap.get(cp.pointNo.trim().toLowerCase());
+      if (orig) {
+        const dx = cp.x - orig.x;
+        const dy = cp.y - orig.y;
+        const dz = Number.isFinite(cp.z) && Number.isFinite(orig.z) ? cp.z - orig.z : NaN;
+        const d2d = Math.sqrt(dx*dx + dy*dy);
+        const d3d = Number.isFinite(dz) ? Math.sqrt(dx*dx + dy*dy + dz*dz) : d2d;
+
+        const ok2D = d2d <= maxTol2D;
+        const okZ = Number.isNaN(dz) || Math.abs(dz) <= maxTolZ;
+
+        state.compareResults.push({
+          pointNo: orig.pointNo,
+          orig, cp,
+          dx, dy, dz, d2d, d3d,
+          inTolerance: ok2D && okZ
+        });
+      }
+    });
+
+    renderCompareTable();
+  }
+
+  function renderCompareTable() {
+    els.compareTableBody.innerHTML = "";
+
+    if (!state.compareResults.length) {
+      els.compareEmpty.style.display = "flex";
+      els.compareEmpty.textContent = "Geen overeenkomstige puntnummers gevonden tussen de bestanden.";
+      els.compareTableWrap.style.display = "none";
+      return;
+    }
+
+    els.compareEmpty.style.display = "none";
+    els.compareTableWrap.style.display = "block";
+
+    state.compareResults.forEach(res => {
+      const tr = document.createElement("tr");
+      if (!res.inTolerance) tr.classList.add("out-of-tol");
+
+      const c1 = document.createElement("td"); c1.textContent = res.pointNo;
+      const c2 = document.createElement("td"); c2.className = "num"; c2.textContent = res.dx.toFixed(3);
+      const c3 = document.createElement("td"); c3.className = "num"; c3.textContent = res.dy.toFixed(3);
+      const c4 = document.createElement("td"); c4.className = "num"; c4.textContent = Number.isNaN(res.dz) ? "—" : res.dz.toFixed(3);
+      const c5 = document.createElement("td"); c5.className = "num"; c5.textContent = res.d2d.toFixed(3);
+      const c6 = document.createElement("td"); c6.className = "num"; c6.textContent = res.d3d.toFixed(3);
+      
+      const c7 = document.createElement("td");
+      c7.innerHTML = res.inTolerance 
+        ? `<span class="flag ok">Binnen norm</span>` 
+        : `<span class="flag">Buiten norm</span>`;
+
+      tr.append(c1,c2,c3,c4,c5,c6,c7);
+      els.compareTableBody.appendChild(tr);
+    });
+
+    setStatus(`${state.compareResults.length} punten vergeleken`, "ok");
+  }
+
+  function exportCompareTxt() {
+    if (!state.compareResults.length) {
+      alert("Er zijn nog geen vergelijkingsresultaten beschikbaar.");
+      return;
+    }
+
+    const sep = delimiterChar(els.exportDelimiter.value);
+    const header = ["Puntnummer","dX","dY","dZ","d2D","d3D","Status"].join(sep);
+    const lines = [header];
+
+    state.compareResults.forEach(r => {
+      lines.push([
+        r.pointNo,
+        r.dx.toFixed(3),
+        r.dy.toFixed(3),
+        Number.isNaN(r.dz) ? "" : r.dz.toFixed(3),
+        r.d2d.toFixed(3),
+        r.d3d.toFixed(3),
+        r.inTolerance ? "OK" : "BUITEN_TOLERANTIE"
+      ].join(sep));
+    });
+
+    downloadBlob(lines.join("\r\n") + "\r\n", `${baseFileName()}_vergelijking.txt`, "text/plain;charset=utf-8");
+    setStatus("Vergelijkingsrapport geëxporteerd", "ok");
+  }
+
   // --- Events ---
   els.dropzone.addEventListener("click", () => els.fileInput.click());
   els.dropzone.addEventListener("keydown", e => {
@@ -1227,10 +1519,14 @@ tbody tr.hidden{display:none}
     handleFile(e.dataTransfer.files[0]);
   });
 
+  // Events voor vergelijkingsbestand
+  els.compareDropzone.addEventListener("click", () => els.compareFileInput.click());
+  els.compareFileInput.addEventListener("change", e => handleCompareFile(e.target.files[0]));
+  els.runCompareBtn.addEventListener("click", runComparison);
+  els.exportCompareTxtBtn.addEventListener("click", exportCompareTxt);
+
   els.importDelimiter.addEventListener("change", () => {
-    if (state.rawContent) {
-      parseFileText(state.rawContent);
-    }
+    if (state.rawContent) parseFileText(state.rawContent);
   });
 
   els.filterCodeBtn.addEventListener("click", () => {
