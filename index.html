@@ -1,184 +1,572 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coördinaten Tool</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
-        h2 { color: #333; }
-        
-        /* Tabbladen Styling */
-        .tab-container { margin-bottom: 20px; border-bottom: 2px solid #ccc; }
-        .tab-button {
-            background-color: #eee; border: none; outline: none; cursor: pointer;
-            padding: 10px 20px; font-size: 16px; margin-right: 2px; border-radius: 5px 5px 0 0;
-        }
-        .tab-button:hover { background-color: #ddd; }
-        .tab-button.active { background-color: #007BFF; color: white; border-bottom: 2px solid #007BFF; }
-        
-        /* Tab Inhoud Styling */
-        .tab-content { display: none; padding: 20px; background: white; border: 1px solid #ccc; border-top: none; }
-        .tab-content.active { display: block; }
-        
-        /* Algemene elementen */
-        input, select, button { padding: 8px; margin: 5px 0; }
-        .btn-action { background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 3px; }
-        .btn-action:hover { background-color: #218838; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        #map-container { width: 100%; height: 400px; background-color: #eaeaea; display: flex; align-items: center; justify-content: center; color: #666;}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Meetdata Controle — Maatvoerder</title>
+
+<!-- Leaflet voor de interactieve kaart -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3RER8jK0oZ0jX3M6Q9s0n4R7hR7cY=" crossorigin=""/>
+
+<style>
+:root{
+  --bg:#0b1220;
+  --panel:#111827;
+  --panel2:#172033;
+  --line:#263247;
+  --text:#eef2f7;
+  --muted:#9ca9bd;
+  --accent:#d9a441;
+  --accent2:#f2c66d;
+  --ok:#41c58a;
+  --warn:#f1b74a;
+  --danger:#ef6a6a;
+  --shadow:0 12px 35px rgba(0,0,0,.22);
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100vh}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{max-width:1600px;margin:0 auto;padding:16px}
+
+/* Topbar */
+.topbar{
+  position:sticky;top:0;z-index:1000;
+  background:rgba(11,18,32,.94);backdrop-filter:blur(12px);
+  padding:8px 0 14px;
+}
+.topbar-inner{display:flex;gap:12px;align-items:center;justify-content:space-between}
+.title h1{margin:0;font-size:1.35rem;letter-spacing:.2px}
+.title p{margin:3px 0 0;color:var(--muted);font-size:.88rem}
+.status-pill{
+  display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--line);
+  border-radius:999px;background:var(--panel);font-size:.82rem;color:var(--muted)
+}
+.dot{width:9px;height:9px;border-radius:50%;background:#667085}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.danger{background:var(--danger)}
+
+/* Tabs Navigatie */
+.tabs-nav{
+  display:flex;gap:6px;margin:16px 0;border-bottom:1px solid var(--line);
+  overflow-x:auto;padding-bottom:1px;
+}
+.tab-btn{
+  background:var(--panel);border:1px solid var(--line);border-bottom:none;
+  color:var(--muted);padding:12px 18px;border-radius:12px 12px 0 0;
+  font-weight:600;font-size:.88rem;transition:.15s;white-space:nowrap;
+}
+.tab-btn:hover{background:var(--panel2);color:var(--text)}
+.tab-btn.active{
+  background:var(--accent);color:#1b160c;border-color:var(--accent);font-weight:800;
+}
+
+/* Tab Panels */
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Panels & Grid Layouts */
+.panel{
+  background:linear-gradient(180deg,var(--panel),#0f1726);
+  border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+  overflow:hidden;margin-bottom:16px;
+}
+.panel-header{padding:14px 16px;border-bottom:1px solid var(--line);font-weight:700;color:var(--accent2)}
+.panel-body{padding:16px}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+
+/* Formulieren & Knoppen */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:6px}
+input[type="text"],input[type="number"],select{
+  width:100%;background:#0d1524;color:var(--text);border:1px solid var(--line);
+  border-radius:10px;padding:10px 12px;outline:none;
+}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,164,65,.12)}
+.btn{
+  border:1px solid var(--line);border-radius:10px;background:#151f31;color:var(--text);
+  padding:10px 14px;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn:hover{border-color:#40506b;background:#1a263b}
+.btn.primary{background:var(--accent);color:#1b160c;border-color:var(--accent);font-weight:800}
+.btn.primary:hover{background:var(--accent2)}
+.btn.ok{border-color:rgba(65,197,138,.45);color:#9de7c6}
+.btn.warn{border-color:rgba(241,183,74,.45);color:#f5d18b}
+.btn.danger{border-color:rgba(239,106,106,.45);color:#ffabab}
+.btn.small{padding:7px 10px;font-size:.8rem}
+
+/* Dropzone */
+.dropzone{
+  border:2px dashed #45556f;border-radius:14px;padding:32px 16px;text-align:center;
+  background:rgba(255,255,255,.015);cursor:pointer;transition:.15s;
+}
+.dropzone:hover,.dropzone.dragover{border-color:var(--accent);background:rgba(217,164,65,.07)}
+#fileInput{display:none}
+
+/* Tabellen */
+.table-wrap{overflow:auto;max-height:60vh;min-height:200px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:.84rem}
+thead th{
+  position:sticky;top:0;z-index:2;background:#182236;color:#cbd5e1;
+  font-weight:700;text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);white-space:nowrap
+}
+tbody td{padding:10px;border-bottom:1px solid #1e293b;white-space:nowrap}
+tbody tr:hover{background:rgba(255,255,255,.03)}
+tbody tr.selected{background:rgba(217,164,65,.1)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.code{font-weight:700;letter-spacing:.03em}
+
+/* Kaart */
+#map{height:520px;background:#0c1320;border-radius:0 0 var(--radius) var(--radius)}
+
+/* Metrics & Badges */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.metric{padding:12px;border:1px solid var(--line);border-radius:12px;background:#0d1524}
+.metric strong{display:block;font-size:1.2rem;color:var(--accent2)}
+.metric span{display:block;font-size:.75rem;color:var(--muted);margin-top:2px}
+.badge{padding:4px 8px;border-radius:999px;font-size:.72rem;background:#172135;border:1px solid var(--line);color:var(--muted)}
+.badge.ok{color:#9de7c6;border-color:rgba(65,197,138,.3)}
+
+.hint{font-size:.78rem;color:var(--muted);line-height:1.4}
+.footer{padding:16px 0;color:#66758d;font-size:.75rem;text-align:center}
+
+@media (max-width:800px){
+  .grid-2,.grid-3{grid-template-columns:1fr}
+}
+</style>
 </head>
+
 <body>
-
-    <h2>Project Data Beheer</h2>
-
-    <!-- Tab Knoppen -->
-    <div class="tab-container">
-        <button class="tab-button active" onclick="openTab(event, 'tab-import')">1. Import & Controle</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-selectie')">2. Selectie</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-kaart')">3. Kaart</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-afwijkingen')">4. Afwijkingen</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-export')">5. Export</button>
+<div class="app">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="title">
+        <h1>Meetdata Controle</h1>
+        <p>RD2018 · Maatvoering & Landmeten</p>
+      </div>
+      <div class="status-pill">
+        <span id="statusDot" class="dot"></span>
+        <span id="statusText">Geen bestand geladen</span>
+      </div>
     </div>
+  </header>
 
-    <!-- TAB 1: Import & Controle -->
-    <div id="tab-import" class="tab-content active">
-        <h3>Importeer Data</h3>
-        <label>Scheidingsteken:</label>
-        <select id="import-delimiter">
-            <option value=",">Komma (,)</option>
-            <option value="\t">Tab</option>
-            <option value=";">Puntkomma (;)</option>
-        </select><br>
-        <input type="file" id="file-import" accept=".csv, .txt">
-        <button class="btn-action" onclick="importData()">Inladen</button>
-        <p><em>Hier komt de controle van wat er nu in het systeem staat (aantal punten, format check).</em></p>
-    </div>
+  <!-- Navigatie Tabs -->
+  <nav class="tabs-nav">
+    <button class="tab-btn active" onclick="switchTab('tab-import')">1. Import & Instellingen</button>
+    <button class="tab-btn" onclick="switchTab('tab-selectie')">2. Selectie & Wildcards</button>
+    <button class="tab-btn" onclick="switchTab('tab-kaart')">3. Kaartweergave</button>
+    <button class="tab-btn" onclick="switchTab('tab-afwijkingen')">4. Afwijkingen Controle</button>
+    <button class="tab-btn" onclick="switchTab('tab-export')">5. Export</button>
+  </nav>
 
-    <!-- TAB 2: Selectie (met Wildcards) -->
-    <div id="tab-selectie" class="tab-content">
-        <h3>Selecteer Punten</h3>
-        <p>Zoek op puntnummer. Gebruik <b>*</b> als wildcard (bijv. <code>100*</code> voor alles dat begint met 100).</p>
-        <input type="text" id="search-puntnummer" placeholder="Bijv. *meetpunt* of 10*">
-        <button class="btn-action" onclick="filterPunten()">Filter Toepassen</button>
-        
-        <table id="selectie-tabel">
-            <thead>
-                <tr>
-                    <th>Puntnummer</th>
-                    <th>X / Y / Z</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Wordt gevuld via JS -->
-            </tbody>
-        </table>
-    </div>
-
-    <!-- TAB 3: Kaart -->
-    <div id="tab-kaart" class="tab-content">
-        <h3>Visuele Weergave</h3>
-        <p>Geselecteerde punten worden in een andere kleur weergegeven dan de rest.</p>
-        <div id="map-container">
-            [ Hier komt de interactieve kaart (bijv. gekoppeld aan je Google/Bing maps weergave) ]
+  <!-- TAB 1: IMPORT & INSTELLINGEN -->
+  <div id="tab-import" class="tab-content active">
+    <div class="grid-2">
+      <section class="panel">
+        <div class="panel-header">Bestand Inladen</div>
+        <div class="panel-body">
+          <div id="dropzone" class="dropzone">
+            <strong>Klik of sleep hier je meetbestand heen</strong>
+            <div class="hint" style="margin-top:6px">Ondersteunt .txt, .csv, .asc, .dat</div>
+            <input id="fileInput" type="file" accept=".txt,.csv,.asc,.dat,.log,.prn">
+          </div>
+          <div style="margin-top:16px" class="grid-2">
+            <div class="field">
+              <label for="importDelimiter">Import Scheidingsteken</label>
+              <select id="importDelimiter">
+                <option value="tab">Tabulator</option>
+                <option value="comma">Komma (,)</option>
+                <option value="semicolon">Puntkomma (;)</option>
+                <option value="space">Spatie</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="hasHeader">Headerregel</label>
+              <select id="hasHeader">
+                <option value="auto">Automatisch detecteren</option>
+                <option value="yes">Ja (eerste regel negeren)</option>
+                <option value="no">Nee (direct data)</option>
+              </select>
+            </div>
+          </div>
         </div>
-    </div>
+      </section>
 
-    <!-- TAB 4: Afwijkingen (Nieuw) -->
-    <div id="tab-afwijkingen" class="tab-content">
-        <h3>Controle Afwijkingen (Origineel vs. Uitzetpunt)</h3>
-        <p>Vergelijk een reeks originele ontwerppunten met de ingemeten uitzetpunten.</p>
-        <button class="btn-action">Start Vergelijking</button>
+      <section class="panel">
+        <div class="panel-header">Bestand & Kolom Status</div>
+        <div class="panel-body">
+          <div class="metrics-grid">
+            <div class="metric"><strong id="mTotal">0</strong><span>Totaal punten</span></div>
+            <div class="metric"><strong id="mCols">0</strong><span>Kolommen</span></div>
+          </div>
+          <div id="fileMeta" class="hint">Nog geen bestand geladen.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- TAB 2: SELECTIE & WILDCARDS -->
+  <div id="tab-selectie" class="tab-content">
+    <section class="panel">
+      <div class="panel-header">Zoeken & Filteren op Puntnummer</div>
+      <div class="panel-body">
+        <div class="grid-2">
+          <div class="field">
+            <label for="nrWildcard">Wildcard filter op Puntnummer (* en ? toegestaan)</label>
+            <input id="nrWildcard" type="text" placeholder="bijv. 100*, *UITZET*, MP-?">
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end;gap:8px">
+            <button id="btnSelectWildcard" class="btn primary">Selecteer Matches</button>
+            <button id="btnDeselectWildcard" class="btn">Deselecteer Matches</button>
+            <button id="btnClearFilter" class="btn warn">Wis Filter</button>
+          </div>
+        </div>
+        <div class="hint">Gebruik <b>*</b> voor meerdere tekens en <b>?</b> voor één willekeurig teken. Komma's scheiden meerdere zoektermen.</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center">
+        <span>Puntenoverzicht</span>
+        <div>
+          <button id="btnSelectAll" class="btn small primary">Alles selecteren</button>
+          <button id="btnDeselectAll" class="btn small">Alles deselecteren</button>
+        </div>
+      </div>
+      <div class="table-wrap">
         <table>
-            <thead>
-                <tr>
-                    <th>Basis Punt</th>
-                    <th>Uitzet Punt</th>
-                    <th>&Delta;X</th>
-                    <th>&Delta;Y</th>
-                    <th>&Delta;Z</th>
-                    <th>Tolerantie Check</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Resultaten van afwijkingen -->
-            </tbody>
+          <thead>
+            <tr>
+              <th style="width:40px"><input type="checkbox" id="checkAll"></th>
+              <th>Puntnummer</th>
+              <th class="num">X (RD)</th>
+              <th class="num">Y (RD)</th>
+              <th class="num">Z (NAP)</th>
+              <th>Code</th>
+            </tr>
+          </thead>
+          <tbody id="pointTableBody">
+            <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">Laad eerst een bestand in op tab 1.</td></tr>
+          </tbody>
         </table>
-    </div>
+      </div>
+    </section>
+  </div>
 
-    <!-- TAB 5: Export -->
-    <div id="tab-export" class="tab-content">
-        <h3>Exporteer Selectie</h3>
-        <label>Bestandsnaam:</label>
-        <input type="text" id="export-filename" placeholder="bijv. project_selectie">
-        <br>
-        <label>Scheidingsteken:</label>
-        <select id="export-delimiter">
-            <option value=",">Komma (,)</option>
-            <option value="\t">Tab</option>
-            <option value=";">Puntkomma (;)</option>
-        </select><br>
-        <button class="btn-action" onclick="exportData()">Download Bestand</button>
-    </div>
+  <!-- TAB 3: KAART -->
+  <div id="tab-kaart" class="tab-content">
+    <section class="panel">
+      <div class="panel-header">Geselecteerde Punten op de Kaart (RD2018 Transform)</div>
+      <div id="map"></div>
+    </section>
+  </div>
 
-    <script>
-        // Functie om tabbladen te wisselen
-        function openTab(evt, tabName) {
-            let i, tabcontent, tabbuttons;
-            
-            tabcontent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-            }
-            
-            tabbuttons = document.getElementsByClassName("tab-button");
-            for (i = 0; i < tabbuttons.length; i++) {
-                tabbuttons[i].className = tabbuttons[i].className.replace(" active", "");
-            }
-            
-            document.getElementById(tabName).style.display = "block";
-            evt.currentTarget.className += " active";
+  <!-- TAB 4: AFWIJKINGEN CONTROLE -->
+  <div id="tab-afwijkingen" class="tab-content">
+    <section class="panel">
+      <div class="panel-header">Vergelijk Origineel vs. Ingemeten Uitzetpunt</div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <div class="field">
+            <label for="suffixOrig">Herkenning Origineel Punt</label>
+            <input id="suffixOrig" type="text" placeholder="bijv. * (of exact nummer)">
+          </div>
+          <div class="field">
+            <label for="suffixCheck">Herkenning Uitzetpunt</label>
+            <input id="suffixCheck" type="text" placeholder="bijv. *_UITZET of *_GEM">
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end">
+            <button id="btnCalcDeviations" class="btn primary style="width:100%"">Bereken Afwijkingen</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">Resultaten Controle (ΔX, ΔY, ΔZ)</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Basis Punt</th>
+              <th>Gemeten Punt</th>
+              <th class="num">ΔX (mm)</th>
+              <th class="num">ΔY (mm)</th>
+              <th class="num">Δ2D (mm)</th>
+              <th class="num">ΔZ (mm)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="devTableBody">
+            <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">Voer een vergelijking uit om afwijkingen te berekenen.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB 5: EXPORT -->
+  <div id="tab-export" class="tab-content">
+    <section class="panel">
+      <div class="panel-header">Instellingen Exportbestand</div>
+      <div class="panel-body">
+        <div class="grid-2">
+          <div class="field">
+            <label for="exportFileName">Bestandsnaam</label>
+            <input id="exportFileName" type="text" placeholder="bijv. Uitzetwerk_Grondslag_v1">
+          </div>
+          <div class="field">
+            <label for="exportDelimiter">Export Scheidingsteken</label>
+            <select id="exportDelimiter">
+              <option value="tab">Tabulator</option>
+              <option value="comma">Komma (,)</option>
+              <option value="semicolon">Puntkomma (;)</option>
+              <option value="space">Spatie</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="exportDecimals">Aantal Decimalen (X/Y/Z)</label>
+            <input id="exportDecimals" type="number" min="0" max="8" value="3">
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end;gap:12px">
+            <button id="btnExportTxt" class="btn ok" style="flex:1">Exporteer TXT / CSV</button>
+            <button id="btnExportKml" class="btn primary" style="flex:1">Exporteer KML (Google Earth)</button>
+          </div>
+        </div>
+        <div class="hint" style="margin-top:10px">Alleen de momenteel <b>geselecteerde</b> punten worden meegegaan in de export.</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="footer">
+    Meetdata Controle · Maatvoering Dashboard
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script>
+(() => {
+  "use strict";
+
+  const state = {
+    fileName: "",
+    points: [],
+    selected: new Set(),
+    map: null,
+    markerLayer: null
+  };
+
+  const $ = id => document.getElementById(id);
+
+  // Tab functionaliteit
+  window.switchTab = function(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    event.currentTarget.classList.add('active');
+    $(tabId).classList.add('active');
+
+    if (tabId === 'tab-kaart' && state.map) {
+      setTimeout(() => { state.map.invalidateSize(); updateMap(); }, 150);
+    }
+  };
+
+  // Helper voor wildcards (* en ?)
+  function wildcardToRegExp(pattern) {
+    const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+    const regexString = '^' + escaped.replace(/\*/g, '.*').replace(/\?/g, '.') + '$';
+    return new RegExp(regexString, 'i');
+  }
+
+  function matchWildcard(text, inputPattern) {
+    if (!inputPattern) return true;
+    const patterns = inputPattern.split(',').map(s => s.trim()).filter(Boolean);
+    return patterns.some(p => {
+      let pat = p;
+      if (!pat.includes('*') && !pat.includes('?')) pat = '*' + pat + '*';
+      return wildcardToRegExp(pat).test(text);
+    });
+  }
+
+  // Parse getallen
+  function parseNum(v) {
+    if (v == null) return NaN;
+    let s = String(v).trim().replace(',', '.');
+    return parseFloat(s);
+  }
+
+  // File loading
+  const dropzone = $("dropzone");
+  const fileInput = $("fileInput");
+
+  dropzone.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", e => handleFile(e.target.files[0]));
+
+  function handleFile(file) {
+    if (!file) return;
+    state.fileName = file.name;
+    const reader = new FileReader();
+    reader.onload = () => parseText(reader.result);
+    reader.readAsText(file);
+  }
+
+  function parseText(text) {
+    const delimChoice = $("importDelimiter").value;
+    const delim = delimChoice === "comma" ? "," : delimChoice === "semicolon" ? ";" : delimChoice === "space" ? /\s+/ : "\t";
+    
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    state.points = [];
+    state.selected.clear();
+
+    lines.forEach((line, idx) => {
+      const parts = line.split(delim).map(p => p.trim());
+      if (parts.length >= 3) {
+        // Slimme toewijzing: Neem aan dat P, X, Y, Z, Code de volgorde is
+        const pt = {
+          id: idx,
+          nr: parts[0],
+          x: parseNum(parts[1]),
+          y: parseNum(parts[2]),
+          z: parseNum(parts[3]) || 0,
+          code: parts[4] || ""
+        };
+        if (!isNaN(pt.x) && !isNaN(pt.y)) {
+          state.points.push(pt);
+          state.selected.add(pt.id);
         }
+      }
+    });
 
-        // --- Voorbeeld logica voor de Wildcard Selectie ---
-        // Dummy data om het te testen
-        let allePunten = [
-            { puntnummer: "1001", x: 175000, y: 450000, z: 1.5 },
-            { puntnummer: "1002_uitzet", x: 175001, y: 450002, z: 1.4 },
-            { puntnummer: "A-500", x: 175100, y: 450100, z: 2.0 }
-        ];
+    $("mTotal").textContent = state.points.length;
+    $("fileMeta").innerHTML = `<b>${state.fileName}</b> geladen met ${state.points.length} geldige punten.`;
+    $("statusText").textContent = `${state.points.length} punten geladen`;
+    $("statusDot").className = "dot ok";
 
-        function filterPunten() {
-            let zoekTerm = document.getElementById("search-puntnummer").value.trim();
-            
-            // Zet de wildcard '*' om naar een Regex '.*' voor de zoekopdracht
-            // escapeRegex voorkomt dat andere leestekens de boel in de war sturen
-            let regexString = "^" + zoekTerm.replace(/\*/g, '.*') + "$";
-            let regex = new RegExp(regexString, "i"); // "i" maakt het hoofdletterongevoelig
+    renderTable();
+  }
 
-            let gefilterd = allePunten.filter(punt => regex.test(punt.puntnummer));
-            
-            console.log("Gevonden punten:", gefilterd);
-            // Hier voeg je code toe om de 'selectie-tabel' te vullen met de 'gefilterd' array
-            alert(gefilterd.length + " punten gevonden met deze wildcard!");
-        }
+  // Tabel Renderen
+  function renderTable() {
+    const tbody = $("pointTableBody");
+    tbody.innerHTML = "";
 
-        function exportData() {
-            let filename = document.getElementById("export-filename").value || "export";
-            let delimiter = document.getElementById("export-delimiter").value;
-            // Hier komt je export logica waarbij je 'delimiter' gebruikt om de kolommen te scheiden
-            alert("Bestand " + filename + ".txt wordt gegenereerd met scheidingsteken: " + (delimiter === "\t" ? "TAB" : delimiter));
-        }
+    if (!state.points.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">Geen data gevonden.</td></tr>';
+      return;
+    }
 
-        function importData() {
-            let delimiter = document.getElementById("import-delimiter").value;
-            // Hier komt je FileReader logica die data splitst op basis van de gekozen delimiter
-            alert("Inlezen gestart met scheidingsteken: " + (delimiter === "\t" ? "TAB" : delimiter));
-        }
-    </script>
+    const filter = $("nrWildcard").value.trim();
+
+    state.points.forEach(p => {
+      const isVisible = !filter || matchWildcard(p.nr, filter);
+      if (!isVisible) return;
+
+      const tr = document.createElement("tr");
+      if (state.selected.has(p.id)) tr.classList.add("selected");
+
+      tr.innerHTML = `
+        <td><input type="checkbox" ${state.selected.has(p.id) ? 'checked' : ''} data-id="${p.id}"></td>
+        <td><strong>${p.nr}</strong></td>
+        <td class="num">${p.x.toFixed(3)}</td>
+        <td class="num">${p.y.toFixed(3)}</td>
+        <td class="num">${p.z.toFixed(3)}</td>
+        <td class="code">${p.code}</td>
+      `;
+
+      tr.querySelector('input').addEventListener('change', (e) => {
+        if (e.target.checked) state.selected.add(p.id);
+        else state.selected.delete(p.id);
+        tr.classList.toggle("selected", e.target.checked);
+      });
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Wildcard Acties
+  $("btnSelectWildcard").addEventListener("click", () => {
+    const pattern = $("nrWildcard").value.trim();
+    if (!pattern) return;
+    state.points.forEach(p => {
+      if (matchWildcard(p.nr, pattern)) state.selected.add(p.id);
+    });
+    renderTable();
+  });
+
+  $("btnDeselectWildcard").addEventListener("click", () => {
+    const pattern = $("nrWildcard").value.trim();
+    if (!pattern) return;
+    state.points.forEach(p => {
+      if (matchWildcard(p.nr, pattern)) state.selected.delete(p.id);
+    });
+    renderTable();
+  });
+
+  $("btnClearFilter").addEventListener("click", () => {
+    $("nrWildcard").value = "";
+    renderTable();
+  });
+
+  $("btnSelectAll").addEventListener("click", () => {
+    state.points.forEach(p => state.selected.add(p.id));
+    renderTable();
+  });
+
+  $("btnDeselectAll").addEventListener("click", () => {
+    state.selected.clear();
+    renderTable();
+  });
+
+  // RD2018 naar WGS84 Conversie voor de Kaart
+  function rdToWgs84(x, y) {
+    const dX = (x - 155000) * 1e-5;
+    const dY = (y - 463000) * 1e-5;
+    const lat = 52.15517440 + ((3235.65389 * dY - 32.58297 * Math.pow(dX, 2) - 0.2475 * Math.pow(dY, 2)) / 3600);
+    const lon = 5.38720621 + ((5260.52916 * dX + 105.94684 * dX * dY) / 3600);
+    return [lat, lon];
+  }
+
+  // Kaart Initialiseren
+  function initMap() {
+    state.map = L.map("map").setView([52.21, 5.28], 8);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19, attribution: '© OpenStreetMap'
+    }).addTo(state.map);
+    state.markerLayer = L.layerGroup().addTo(state.map);
+  }
+
+  function updateMap() {
+    if (!state.map) return;
+    state.markerLayer.clearLayers();
+    const bounds = [];
+
+    state.points.forEach(p => {
+      if (state.selected.has(p.id)) {
+        const coords = rdToWgs84(p.x, p.y);
+        const marker = L.circleMarker(coords, {
+          radius: 6, fillColor: "#d9a441", color: "#fff", weight: 1, fillOpacity: 0.9
+        }).bindPopup(`<b>${p.nr}</b><br>X: ${p.x}<br>Y: ${p.y}<br>Z: ${p.z}`);
+        
+        marker.addTo(state.markerLayer);
+        bounds.push(coords);
+      }
+    });
+
+    if (bounds.length) state.map.fitBounds(bounds, {padding: [30,30]});
+  }
+
+  // Initialisatie
+  initMap();
+
+})();
+</script>
 </body>
 </html>
