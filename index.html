@@ -617,7 +617,18 @@ function toggleQuickFilter(code) {
     dropzone: $("dropzone"),
     fileInput: $("fileInput"),
     importDelimiter: $("importDelimiter"),
+    exportName: $("exportName"),
     exportDelimiter: $("exportDelimiter"),
+    exportDecimals: $("exportDecimals"),
+    kmlHeightMode: $("kmlHeightMode"),
+    exportTxtBtn: $("exportTxtBtn"),
+    exportKmlBtn: $("exportKmlBtn"),
+    exportNameAlt: $("exportNameAlt"),
+    exportDelimiterAlt: $("exportDelimiterAlt"),
+    exportDecimalsAlt: $("exportDecimalsAlt"),
+    kmlHeightModeAlt: $("kmlHeightModeAlt"),
+    exportTxtBtnAlt: $("exportTxtBtnAlt"),
+    exportKmlBtnAlt: $("exportKmlBtnAlt"),
     mappingArea: $("mappingArea"),
     mappingHint: $("mappingHint"),
     codeFilter: $("codeFilter"),
@@ -628,10 +639,6 @@ function toggleQuickFilter(code) {
     scanDuplicatesBtn: $("scanDuplicatesBtn"),
     markDuplicatesBtn: $("markDuplicatesBtn"),
     duplicateInfo: $("duplicateInfo"),
-    exportTxtBtn: $("exportTxtBtn"),
-    exportKmlBtn: $("exportKmlBtn"),
-    exportDecimals: $("exportDecimals"),
-    kmlHeightMode: $("kmlHeightMode"),
     selectAllBtn: $("selectAllBtn"),
     deselectAllBtn: $("deselectAllBtn"),
     headerCheckbox: $("headerCheckbox"),
@@ -1450,8 +1457,8 @@ function toggleQuickFilter(code) {
     els.exportTxtBtn.addEventListener("click", () => exportTxt(false));
     els.exportKmlBtn.addEventListener("click", () => exportKml(false));
 
-    if ($("exportTxtBtnAlt")) $("exportTxtBtnAlt").addEventListener("click", () => exportTxt(true));
-    if ($("exportKmlBtnAlt")) $("exportKmlBtnAlt").addEventListener("click", () => exportKml(true));
+    if (els.exportTxtBtnAlt) els.exportTxtBtnAlt.addEventListener("click", () => exportTxt(true));
+    if (els.exportKmlBtnAlt) els.exportKmlBtnAlt.addEventListener("click", () => exportKml(true));
   }
 
   // Initialisatie bij laden
