@@ -61,7 +61,7 @@ footer{text-align:center;color:#686b75;font-size:.68rem;padding:16px 8px 25px;li
 <header>
 <div class="eyebrow">Astronomische tijdrekening</div>
 <h1>Henoch-klok</h1>
-<div class="subtitle">18 Henoch-uren · 80 echte minuten per Henoch-uur · v1.8</div>
+<div class="subtitle">18 Henoch-uren · 80 echte minuten per Henoch-uur</div>
 </header>
 <nav class="tabs" aria-label="Navigatie">
 <button class="tab active" data-tab="home">Nu</button>
@@ -132,7 +132,6 @@ footer{text-align:center;color:#686b75;font-size:.68rem;padding:16px 8px 25px;li
 
 <footer>Alles wordt lokaal berekend. Geen externe API's of libraries. Civiele schemering en zonsondergang gebruiken een NOAA-gebaseerde berekening; de maanwaarneming is een astronomische benadering en kan per horizon/weer enkele uren verschillen.</footer>
 </div>
-
 <script>
 "use strict";
 const FALLBACK={lat:52.155,lon:5.387,name:"Nederland (standaard)"};
@@ -157,8 +156,10 @@ function solarEvent(date,lat,lon,isSunrise,zenith=90.833){
   return new Date(Date.UTC(year,date.getMonth(),date.getDate(),0,0,0,0)+UT*3600000);
 }
 function calculateSunTimes(date){return {civilDawn:solarEvent(date,locationData.lat,locationData.lon,true,96),sunrise:solarEvent(date,locationData.lat,locationData.lon,true,90.833),sunset:solarEvent(date,locationData.lat,locationData.lon,false,90.833),civilDusk:solarEvent(date,locationData.lat,locationData.lon,false,96)};}
+// The Henoch 24-hour cycle begins at local sunset.
 function cycleStartForDate(date){const x=calculateSunTimes(date);return x.sunset;}
 
+/* Lightweight Moon model (Schlyter-style low precision) used only to estimate first visible crescent. */
 function moonEquatorial(jd){
   const d=jd-2451543.5,N=125.1228-.0529538083*d,i=5.1454,w=318.0634+.1643573223*d,a=60.2666,e=.0549,M=115.3654+13.0649929509*d;
   const E=M+e*radToDeg(Math.sin(degToRad(M)))*(1+e*Math.cos(degToRad(M)));
@@ -174,7 +175,10 @@ function sunEclipticLon(jd){const n=jd-2451543.5,w=282.9404+.0000470935*n,M=356.
 function jdFromDate(d){return d.getTime()/86400000+2440587.5;}
 function lstHours(d,lon){const jd=jdFromDate(d),T=(jd-2451545)/36525,gmst=280.46061837+360.98564736629*(jd-2451545)+.000387933*T*T-T*T*T/38710000;return ((gmst+lon)/15%24+24)%24;}
 function moonAltitude(d,lat,lon){const m=moonEquatorial(jdFromDate(d)),H=(lstHours(d,lon)-m.ra)*15;const alt=radToDeg(Math.asin(Math.sin(degToRad(lat))*Math.sin(degToRad(m.dec))+Math.cos(degToRad(lat))*Math.cos(degToRad(m.dec))*Math.cos(degToRad(H))));return alt;}
+function moonElongation(d){const age=(jdFromDate(d)-2451550.25972)%29.530588853;const a=((age+29.530588853)%29.530588853);return a/29.530588853*360;}
 function estimateVisibleCrescent(date){
+  // Search backwards up to 4 days for the most recent evening that satisfies a simple
+  // naked-eye crescent heuristic: young moon, sufficient elongation and altitude after sunset.
   const base=new Date(date.getFullYear(),date.getMonth(),date.getDate(),19,0,0);
   let best=null;
   for(let k=0;k<5;k++){
@@ -197,6 +201,7 @@ function hebrewParts(date){
   }catch(e){return {day:"—",month:"—",year:"—",weekday:"—"};}
 }
 function updateHebrew(now){
+  // Hebrew day convention: local date changes at sunset.
   const useDate=(sunsetDate&&now<sunsetDate)?new Date(now.getTime()-DAY):new Date(now);
   const h=hebrewParts(useDate),todayH=hebrewParts(now),cres=estimateVisibleCrescent(useDate);
   $("hebrewDate").textContent=`${h.day} ${h.month} ${h.year}`;
@@ -215,11 +220,12 @@ function updateTimeline(now){
   const dayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0),s=(dawn-dayStart)/DAY*100,e=(sunset-dayStart)/DAY*100,n=(now-dayStart)/DAY*100;
   $("dayBand").style.left=`${clamp(s,0,100)}%`;$("dayBand").style.width=`${clamp(e-s,0,100)}%`;$('sunriseMark').style.left=`${clamp(s,0,100)}%`;$('sunsetMark').style.left=`${clamp(e,0,100)}%`;$('nowMarker').style.left=`${clamp(n,0,100)}%`;
   const dayMs=Math.max(1,sunset-dawn); let nightStart,nextDawn;
-  if(now>=dawn&&now<sunset){const p=clamp((now-dawn)/dayMs,0,1);$('dayLightPct').textContent=`${Math.round(p*100)}%`;$('dayLightFill').style.width=`${p*100}%`;$('dayLightMarker').style.left=`calc(${p*100}% - 1px)`;$('nightPct').textContent='0%';$('nightFill').style.width='0\%';$('nightMarker').style.left='0%';}
-  else {if(now>=sunset){nightStart=sunset;nextDawn=calculateSunTimes(new Date(now.getFullYear(),now.getMonth(),now.getDate()+1)).civilDawn;}else{const prev=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);nightStart=calculateSunTimes(prev).sunset;nextDawn=dawn;} const nMs=Math.max(1,nextDawn-nightStart),p=clamp((now-nightStart)/nMs,0,1);$('dayLightPct').textContent='0\%';$('dayLightFill').style.width='0%';$('dayLightMarker').style.left='0\%';$('nightPct').textContent=`${Math.round(p*100)}%`;$('nightFill').style.width=`${p*100}%`;$('nightMarker').style.left=`calc(${p*100}% - 1px)`;}
+  if(now>=dawn&&now<sunset){const p=clamp((now-dawn)/dayMs,0,1);$('dayLightPct').textContent=`${Math.round(p*100)}%`;$('dayLightFill').style.width=`${p*100}%`;$('dayLightMarker').style.left=`calc(${p*100}% - 1px)`;$('nightPct').textContent='0%';$('nightFill').style.width='0%';$('nightMarker').style.left='0%';}
+  else {if(now>=sunset){nightStart=sunset;nextDawn=calculateSunTimes(new Date(now.getFullYear(),now.getMonth(),now.getDate()+1)).civilDawn;}else{const prev=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);nightStart=calculateSunTimes(prev).sunset;nextDawn=dawn;} const nMs=Math.max(1,nextDawn-nightStart),p=clamp((now-nightStart)/nMs,0,1);$('dayLightPct').textContent='0%';$('dayLightFill').style.width='0%';$('dayLightMarker').style.left='0%';$('nightPct').textContent=`${Math.round(p*100)}%`;$('nightFill').style.width=`${p*100}%`;$('nightMarker').style.left=`calc(${p*100}% - 1px)`;}
   $('dayLightDur').textContent=`${Math.round(dayMs/60000)} min`; if(now>=sunset){const nd=calculateSunTimes(new Date(now.getFullYear(),now.getMonth(),now.getDate()+1)).civilDawn;$('nightDur').textContent=nd?`${Math.round((nd-sunset)/60000)} min`:'—';}else{const ps=calculateSunTimes(new Date(now.getFullYear(),now.getMonth(),now.getDate()-1)).sunset;$('nightDur').textContent=ps?`${Math.round((dawn-ps)/60000)} min`:'—';}
 }
 function getCycle(date){const sun=cycleStartForDate(date);if(!sun)return null;return {start:sun,end:new Date(sun.getTime()+DAY)};}
+function partAt(dateTime,baseDate){const c=getCycle(baseDate);if(!c)return null;let t=dateTime.getTime()-c.start.getTime();while(t<0)t+=DAY;while(t>=DAY)t-=DAY;return {index:Math.floor(t/PART),elapsed:t%PART};}
 function cyclePartsForDate(baseDate){
   const sun=calculateSunTimes(baseDate);if(!sun.sunset)return[];
   const rows=[];
@@ -227,6 +233,8 @@ function cyclePartsForDate(baseDate){
   const next=calculateSunTimes(nextDate),nextDawn=next.civilDawn,nextSunset=next.sunset;
   for(let i=0;i<18;i++){
     const a=new Date(sun.sunset.getTime()+i*PART),b=new Date(a.getTime()+PART),mid=new Date(a.getTime()+PART/2);
+    // The Henoch etmaal starts at sunset. Day begins at civil dawn on the following
+    // civil date and ends at the following sunset.
     const isDay=nextDawn&&nextSunset ? (mid>=nextDawn&&mid<nextSunset) : false;
     const type=isDay?'Dag':'Nacht',typeIndex=rows.filter(r=>r.type===type).length+1;
     rows.push({index:i,start:a,end:b,mid,type,typeIndex,civilDawn:nextDawn,sunrise:sun.sunrise,sunset:sun.sunset,nextSunset});
@@ -241,9 +249,15 @@ function henochHourAt(dateTime,baseDate){
 }
 function henochClockTime(dateTime,baseDate){
   const h=henochHourAt(dateTime,baseDate); if(!h)return '—';
+  // A Henoch hour is exactly 80 real minutes. Its 60 internal units therefore
+  // each equal 80 real seconds. Display them as H:XX, e.g. 2:10.
   const unit=Math.floor(h.elapsed/80000);
   const shownUnit=clamp(unit,0,59);
   return `${h.index+1}:${pad(shownUnit)}`;
+}
+function currentHenochLabel(dateTime,baseDate){
+  const h=henochHourAt(dateTime,baseDate); if(!h)return null;
+  return `${h.type} ${h.typeIndex}`;
 }
 function buildHourTables(now){
   const rows=cyclePartsForDate(now);
@@ -355,7 +369,6 @@ buildFeasts(new Date());
 setInterval(()=>{const now=new Date();const key=`${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${locationData.lat.toFixed(5)}-${locationData.lon.toFixed(5)}`;if(key!==lastCalcKey)recalculate(now);$("clock").textContent=fmtTime(now,true);if(sunsetDate){let cycle=sunsetDate;if(now<cycle){const y=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);cycle=calculateSunTimes(y).sunset;}if(cycle){let t=((now-cycle)\%DAY+DAY)\%DAY,pe=t\%PART;const h=henochHourAt(now,now);$('part').textContent=h?`${h.typeIndex}`:'—';$('henochTime').textContent=henochClockTime(now,now);const rem=Math.max(0,Math.ceil((PART-pe)/1000));$('countdown').textContent=`${pad(Math.floor(rem/60))}:${pad(rem%60)}`;$('next').textContent=h?`${h.type} · volgend ${h.type==='Dag'?'dag':'nacht'}-uur ${h.typeIndex+1}`:'naar volgend uur';$('ring').style.strokeDashoffset=String(C*(1-pe/PART));}updateTimeline(now);if(now.getSeconds()===0){updateHebrew(now);buildFeasts(now);}}},250);
 if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>setLocation(p.coords.latitude,p.coords.longitude,`GPS ${p.coords.latitude.toFixed(2)}°, ${p.coords.longitude.toFixed(2)}°`),()=>{},{enableHighAccuracy:true,timeout:5000,maximumAge:600000});
 </script>
-
 <script>
 (function(){
   'use strict';
@@ -364,12 +377,13 @@ if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>setLocation
   const pad=n=>String(n).padStart(2,'0');
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 
+  // ---------- version / visual changes ----------
   const subtitle=document.querySelector('header .subtitle');
   if(subtitle) subtitle.textContent='18 Henoch-uren · 80 echte minuten per Henoch-uur · v1.8';
   const oldClockLabel=document.querySelector('.henoch-clock-label');
   const oldClock=el('henochTime');
   if(oldClockLabel) oldClockLabel.style.display='none';
-  if(oldClock) oldClock.style.display='none';
+  if(oldClock) oldClock.style.display='none'; // keep hidden because the v1.0 timer still references it safely
 
   const part=el('part');
   if(part && !el('currentHenochLabel')){
@@ -379,6 +393,7 @@ if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>setLocation
     part.insertAdjacentElement('afterend',d);
   }
 
+  // ---------- Hebrew/Gregorian block ----------
   const hebrew=el('hebrewDate');
   if(hebrew && !el('gregorianDateTop')){
     const d=document.createElement('div');d.id='gregorianDateTop';d.className='greg';
@@ -391,6 +406,7 @@ if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>setLocation
     if(card) card.style.display='none';
   }
 
+  // ---------- year bars ----------
   function ensureHomeYearBar(){
     if(el('homeYearTrack')) return;
     const timeline=el('dayBand')?.closest('.timeline');
@@ -402,6 +418,7 @@ if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>setLocation
   }
   ensureHomeYearBar();
 
+  // ---------- stronger timeline calculations ----------
   window.updateTimeline=function(now){
     const today=calculateSunTimes(now), dawn=today.civilDawn, sunset=today.sunset;
     if(!dawn||!sunset)return;
@@ -444,6 +461,7 @@ if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>setLocation
     if(el('nightDur'))el('nightDur').textContent=`${Math.round(nightMs/60000)} min`;
   };
 
+  // ---------- Aviv-year position ----------
   function hebrewDateKey(date){
     const f=new Intl.DateTimeFormat('en-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'}),p={};
     for(const x of f.formatToParts(date)) if(x.type!=='literal') p[x.type]=x.value;
@@ -474,12 +492,14 @@ if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>setLocation
     if(el('feastYearEnd'))el('feastYearEnd').textContent=`1 Aviv ${b.hYear+1}`;
   }
 
+  // ---------- Hebrew block enhancement ----------
   const oldUpdateHebrew=window.updateHebrew;
   window.updateHebrew=function(now){
     if(oldUpdateHebrew)oldUpdateHebrew(now);
     if(el('gregorianDateTop'))el('gregorianDateTop').textContent=gregorianDateLabel(now);
   };
 
+  // ---------- Feast calculations ----------
   function firstSundayAfterPesach(hy){
     const pesach=findGregorianForHebrew(hy,'Nisan',14);if(!pesach)return null;
     const d=new Date(pesach);do{d.setDate(d.getDate()+1);}while(d.getDay()!==0);return d;
@@ -493,7 +513,7 @@ if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>setLocation
     {name:'Pesach (Pascha)',month:'Nisan',day:14,duration:1,desc:'Vooravond van Pesach.'},
     {name:'Feest van Ongezuurde Broden',month:'Nisan',day:15,duration:7,desc:'Leviticus 23:6–8.'},
     {name:'Eerste Vruchten',special:'firstSunday',duration:1,desc:'Eerste Vruchten binnen de zondagstelling.'},
-    {name:'Shavuot (Wekenfeest)',special:'shavuot',duration:1,desc:'Eerste zondag na Pesach = dag 1; de 50e dag van de telling.'},
+    {name:'Shavuot (Wekenfeest)',special:'shavuot',duration:1,desc:'Volgens jouw regel: eerste zondag na Pesach = dag 1; de 50e dag = de 50e dag van de telling.'},
     {name:'Yom Teruah (Feest van Bazuinen)',month:'Tishri',day:1,duration:1,desc:'Leviticus 23:23–25.'},
     {name:'Yom Kippur (Grote Verzoendag)',month:'Tishri',day:10,duration:1,desc:'Leviticus 23:26–32.'},
     {name:'Sukkot (Loofhuttenfeest)',month:'Tishri',day:15,duration:7,desc:'Leviticus 23:33–43.'},
@@ -560,7 +580,146 @@ if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>setLocation
     updateYearPosition(now);addFeastMarks(now);
     refreshFeastCountdowns(now);
   };
+
+  // ---------- Planner v1.1 ----------
+  function planStateKey(ds){return `henoch-plan-v11-window-${ds}`;}
+  function planBounds(ds){const [y,m,d]=ds.split('-').map(Number);return{midnight:new Date(y,m-1,d,0,0,0,0).getTime(),defaultStart:new Date(y,m-1,d,5,0,0,0).getTime(),defaultEnd:new Date(y,m-1,d+1,0,0,0,0).getTime()};}
+  function planState(ds){const b=planBounds(ds);let obj={start:b.defaultStart,end:b.defaultEnd};try{const x=JSON.parse(localStorage.getItem(planStateKey(ds))||'null');if(x){obj.start=clamp(Number(x.start)||b.defaultStart,b.midnight,b.defaultEnd);obj.end=Math.max(b.defaultEnd,Math.min(Number(x.end)||b.defaultEnd,b.defaultEnd+V11.PART));}}catch(e){}return obj;}
+  function savePlanState(ds,st){localStorage.setItem(planStateKey(ds),JSON.stringify(st));}
+  function planBlocksV11(ds){const b=planBounds(ds),st=planState(ds),rows=[];for(let t=st.start;t<st.end;t+=20*60000){const a=new Date(t),e=new Date(Math.min(t+20*60000,st.end)),h=henochHourAt(a,a);if(h)rows.push({start:a,end:e,h,key:`${ds}|${a.getTime()}`});}return rows;}
+  function plansLoad(ds){try{return JSON.parse(localStorage.getItem(`henoch-plan-${ds}`)||'{}')||{};}catch(e){return{};}}
+  function plansSave(ds,p){localStorage.setItem(`henoch-plan-${ds}`,JSON.stringify(p));if(el('saveState'))el('saveState').textContent=`Lokaal opgeslagen · ${new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}`;}
+  function effective(rows,plans){let prev='';return rows.map(r=>{const raw=String(plans[r.key]??'').trim();let eff;if(raw==='-')eff='';else if(raw==='')eff=prev;else eff=raw;prev=eff;return{...r,raw,eff};});}
+  function buildPlannerV11(){
+    const ds=el('planDate')?.value;if(!ds)return;const rows=planBlocksV11(ds),plans=plansLoad(ds),vals=effective(rows,plans);let html='',last='';
+    vals.forEach((r,i)=>{const hourId=`${r.h.index}-${r.h.start.getTime()}`;if(hourId!==last){if(last)html+='</div></div>';html+=`<div class="plan-row"><div class="plan-head"><div class="plan-title">Henoch-uur ${r.h.type} ${r.h.typeIndex}</div><div class="plan-time">${fmtTime(r.h.start,false)} → ${fmtTime(r.h.end,false)}</div></div><div class="plan-grid">`;last=hourId;}html+=`<div class="plan-slot"><div class="plan-slot-label">${fmtTime(r.start,false)}–${fmtTime(r.end,false)}</div><textarea data-key="${r.key}" placeholder="Activiteit…">${escapeHtml(r.raw)}</textarea></div>`;const nx=vals[i+1];if(!nx||`${nx.h.index}-${nx.h.start.getTime()}`!==hourId){html+='</div></div>';last='';}});
+    el('planList').innerHTML=html||'<div class="section-sub">Geen planningsblokken beschikbaar.</div>';
+    const st=planState(ds),b=planBounds(ds);if(el('addPrevHourBtn'))el('addPrevHourBtn').disabled=st.start<=b.midnight;if(el('removePrevHourBtn'))el('removePrevHourBtn').disabled=st.start>=b.defaultStart;if(el('addNextHourBtn'))el('addNextHourBtn').disabled=st.end>=b.defaultEnd+V11.PART;
+    if(el('addPrevHourBtn'))el('addPrevHourBtn').onclick=()=>{st.start=Math.max(b.midnight,st.start-V11.PART);savePlanState(ds,st);buildPlannerV11();};
+    if(el('removePrevHourBtn'))el('removePrevHourBtn').onclick=()=>{st.start=Math.min(b.defaultStart,st.start+V11.PART);savePlanState(ds,st);buildPlannerV11();};
+    if(el('addNextHourBtn'))el('addNextHourBtn').onclick=()=>{st.end=Math.min(b.defaultEnd+V11.PART,st.end+V11.PART);savePlanState(ds,st);buildPlannerV11();};
+    el('planList').querySelectorAll('textarea').forEach(ta=>ta.addEventListener('input',()=>{const p=plansLoad(ds);p[ta.dataset.key]=ta.value;plansSave(ds,p);updateSponsorV11();}));
+    updateSponsorV11();
+  }
+  function sponsorText(){
+    const ds=el('planDate').value,vals=effective(planBlocksV11(ds),plansLoad(ds)),out=[];let active='',start=null,end=null;
+    for(const r of vals){if(!r.eff){if(active){out.push(`- *${fmtTime(start,false)}–${fmtTime(end,false)}:* ${active}`);active='';start=end=null;}continue;}if(r.eff===active){end=r.end;}else{if(active)out.push(`- *${fmtTime(start,false)}–${fmtTime(end,false)}:* ${active}`);active=r.eff;start=r.start;end=r.end;}}
+    if(active)out.push(`- *${fmtTime(start,false)}–${fmtTime(end,false)}:* ${active}`);return out.length?`*For Today*\n${out.join('\n')}`:'*For Today*\n- ';
+  }
+  function updateSponsorV11(){if(el('sponsorMessage'))el('sponsorMessage').value=sponsorText();}
+  window.exportTXT_V11=function(){const ds=el('planDate').value,vals=effective(planBlocksV11(ds),plansLoad(ds)),lines=[`Henoch planning · ${ds}`,''];vals.forEach(r=>{if(r.eff)lines.push(`${fmtTime(r.start,false)}–${fmtTime(r.end,false)} | ${r.h.type} ${r.h.typeIndex} | ${r.eff}`);});downloadBlob(new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'}),`Henoch-planning-${ds}.txt`);};
+
+  // Replace plan date element so old v1.0 listener does not interfere.
+  const oldDate=el('planDate');
+  if(oldDate){const clone=oldDate.cloneNode(true);oldDate.replaceWith(clone);clone.addEventListener('change',buildPlannerV11);}
+  // Replace planner control buttons so their old event listeners are dropped.
+  ['addPrevHourBtn','removePrevHourBtn','addNextHourBtn'].forEach(id=>{if(el(id)){const c=el(id).cloneNode(true);el(id).replaceWith(c);}});
+  if(el('addPrevHourBtn'))el('addPrevHourBtn').addEventListener('click',buildPlannerV11);
+  if(el('removePrevHourBtn'))el('removePrevHourBtn').addEventListener('click',buildPlannerV11);
+  if(el('addNextHourBtn'))el('addNextHourBtn').addEventListener('click',buildPlannerV11);
+  // Add txt export button without touching old DOC/ICS handlers.
+  if(!el('txtBtn')){const box=document.querySelector('#plan .export-actions');if(box){const b=document.createElement('button');b.id='txtBtn';b.className='button';b.textContent='Export .txt';box.insertBefore(b,box.lastElementChild);b.addEventListener('click',exportTXT_V11);}}
+
+  // ---------- final live update ----------
+  function live(){
+    const now=new Date();
+    if(el('clock'))el('clock').textContent=fmtTime(now,true);
+    if(el('currentHenochLabel')){const h=henochHourAt(now,now);el('currentHenochLabel').textContent=h?`${h.type} ${h.typeIndex}`:'—';}
+    if(el('part')){const h=henochHourAt(now,now);el('part').textContent=h?`${h.typeIndex}`:'—';}
+    if(el('gregorianDateTop'))el('gregorianDateTop').textContent=gregorianDateLabel(now);
+    if(typeof updateTimeline==='function')updateTimeline(now);
+    updateYearPosition(now);
+    refreshFeastCountdowns(now);
+    // Keep the planner and feast cards from being rebuilt every second.
+  }
+
+  // Rebind the Feasts tab button so its opening always renders v1.1.
+  document.querySelectorAll('.tab').forEach(btn=>{if(btn.dataset.tab==='feasts')btn.addEventListener('click',()=>buildFeasts(new Date()));if(btn.dataset.tab==='plan')btn.addEventListener('click',()=>buildPlannerV11());});
+
+  // Initial setup and one stable interval.
+  ensureFeastUI();
+  buildPlannerV11();
+  live();
+  setInterval(live,1000);
+})();
+
+</script>
+
+<script id="v17-final-js">
+(function(){
+'use strict';
+const DAY17=86400000;
+const $17=id=>document.getElementById(id);
+const clamp17=(x,a,b)=>Math.max(a,Math.min(b,x));
+function heb17(d){const f=new Intl.DateTimeFormat('en-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'}),p={};for(const x of f.formatToParts(d))if(x.type!=='literal')p[x.type]=x.value;return{day:Number(p.day),month:String(p.month),year:Number(p.year)};}
+function gregHeb17(hy,month,day){const a=new Date(new Date().getFullYear(),0,1);for(let i=-450;i<=750;i++){const d=new Date(a.getTime()+i*DAY17),h=heb17(d);if(h.year===hy&&h.month===month&&h.day===day)return new Date(d.getFullYear(),d.getMonth(),d.getDate());}return null;}
+function bounds17(now){let hy=heb17(now).year,start=gregHeb17(hy,'Nisan',1);if(start&&now<start){hy--;start=gregHeb17(hy,'Nisan',1);}return{hy,start,next:gregHeb17(hy+1,'Nisan',1)};}
+function monthPositions17(b){
+  if(!b.start||!b.next)return[];
+  const total=b.next-b.start,found=[{n:1,p:0}],seen=new Set();
+  for(let t=b.start.getTime()+DAY17;t<b.next.getTime();t+=DAY17){
+    const d=new Date(t),c=typeof estimateVisibleCrescent==='function'?estimateVisibleCrescent(d):null;
+    if(!c||!c.date)continue;
+    const key=new Date(c.date.getFullYear(),c.date.getMonth(),c.date.getDate()).getTime();
+    const dayKey=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+    if(key!==dayKey||seen.has(key))continue;
+    seen.add(key);
+    if(found.length<14)found.push({n:found.length+1,p:clamp17((key-b.start.getTime())/total,0,1)*100});
+  }
+  if(found.length<12){
+    const fallback=[];
+    for(let t=b.start.getTime();t<b.next.getTime();t+=DAY17){const d=new Date(t),h=heb17(d);if(h.day===1)fallback.push(clamp17((t-b.start.getTime())/total,0,1)*100);}
+    for(const p of fallback){if(found.length>=14)break;if(!found.some(x=>Math.abs(x.p-p)<0.01))found.push({n:found.length+1,p});}
+    found.sort((a,c)=>a.p-c.p).forEach((x,i)=>x.n=i+1);
+  }
+  return found;
+}
+function labels17(bar,p,endYear){if(!bar)return;let row=bar.querySelector('.year-labels');if(!row){row=document.createElement('div');row.className='year-labels';bar.appendChild(row);}row.innerHTML='<span>1 Aviv</span><span>'+p+'%</span><span>1 Aviv '+endYear+'</span>';}
+function months17(bar,b){if(!bar)return;let row=bar.querySelector('.v17-month-row');if(!row){row=document.className='v17-month-row';bar.appendChild(row);}row.innerHTML='';for(const m of monthPositions17(b)){const x=document.createElement('span');x.textContent=String(m.n);x.style.left=m.p+'%';row.appendChild(x);}}
+
+// In één Bijbels jaar horen de voorjaarsfeesten bij het Aviv/Nisan-jaar van de start,
+// en de najaarsfeesten bij Tishri van het daaropvolgende Hebreeuwse kalenderjaar.
+function firstSundayAfterPesach17(hy){const p=gregHeb17(hy,'Nisan',14);if(!p)return null;const d=new Date(p);d.setDate(d.getDate()+1);while(d.getDay()!==0)d.setDate(d.getDate()+1);return d;}
+function feastDefs17(hy){
+  const fs=firstSundayAfterPesach17(hy);
+  const out=[
+    ['Pesach (Pascha)',gregHeb17(hy,'Nisan',14)],
+    ['Feest van Ongezuurde Broden',gregHeb17(hy,'Nisan',15)],
+    ['Eerste Vruchten',fs],
+    ['Shavuot (Wekenfeest)',fs?new Date(fs.getTime()+49*DAY17):null],
+    ['Yom Teruah (Feest van Bazuinen)',gregHeb17(hy+1,'Tishri',1)],
+    ['Yom Kippur (Grote Verzoendag)',gregHeb17(hy+1,'Tishri',10)],
+    ['Sukkot (Loofhuttenfeest)',gregHeb17(hy+1,'Tishri',15)],
+    ['Shemini Atzeret (Achtste Dag)',gregHeb17(hy+1,'Tishri',22)]
+  ];
+  return out.filter(x=>x[1]);
+}
+function markers17(track,b){
+  if(!track||!b.start||!b.next)return;
+  track.querySelectorAll('.v16-feast-marker').forEach(e=>e.remove());
+  const total=b.next-b.start;
+  for(const f of feastDefs17(b.hy)){
+    const p=clamp17((f[1]-b.start)/total,0,1)*100;
+    const m=document.createElement('div');
+    m.className='v16-feast-marker';
+    m.style.left='calc('+p+'% - 2px)';
+    m.title=f[0];
+    track.appendChild(m);
+  }
+}
+function render17(){
+  const now=new Date(), b=bounds17(now);
+  if(!b.start||!b.next)return;
+  const p=Math.round(clamp17((now-b.start)/(b.next-b.start),0,1)*100);
+  const bar1=$17('homeYearTrack')?.closest('.yearbar');
+  if(bar1){labels17(bar1,p,b.hy+1);months17(bar1,b);}
+  const bar2=$17('feastYearTrack')?.closest('.yearbar');
+  if(bar2){labels17(bar2,p,b.hy+1);months17(bar2,b);markers17($17('feastYearTrack'),b);}
+}
+render17();
+setInterval(render17,10000);
 })();
 </script>
+</div>
 </body>
 </html>
