@@ -68,16 +68,15 @@
 </div>
 
 <script>
-    // PAS DIT EENMALIG AAN MET JOUW GEGEVENS:
-    const githubUser = "JOUW_GITHUB_GEBRUIKERSNAAM";
-    const repoName = "JOUW_REPO_NAAM";
+    // Jouw gegevens zijn hier ingevuld:
+    const githubUser = "Rickyoung1997";
+    const repoName = "test";
 
     async function loadFiles() {
         const listEl = document.getElementById('fileList');
         listEl.innerHTML = "<li>Laden...</li>";
 
         try {
-            // Haalt openbaar de inhoud van de map 'files' op (geen token nodig!)
             let response = await fetch(`https://api.github.com/repos/${githubUser}/${repoName}/contents/files`);
             
             if(!response.ok) {
@@ -99,14 +98,24 @@
                     <span style="word-break: break-all; margin-right: 10px;">${file.name}</span>
                     <a href="${file.download_url}" class="download" download>Download</a>
                 `;
+                li.appendChild(li); // Kleine correctie voor weergave
+            });
+            // Hernieuwde weergave logica voor de lijst
+            listEl.innerHTML = "";
+            files.forEach(file => {
+                let li = document.createElement('li');
+                li.innerHTML = `
+                    <span style="word-break: break-all; margin-right: 10px;">${file.name}</span>
+                    <a href="${file.download_url}" class="download" download>Download</a>
+                `;
                 listEl.appendChild(li);
             });
+
         } catch (err) {
             listEl.innerHTML = "<li>Fout bij ophalen van bestanden.</li>";
         }
     }
 
-    // Direct laden bij openen van de pagina
     loadFiles();
 </script>
 
