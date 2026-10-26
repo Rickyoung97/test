@@ -1,561 +1,245 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#090a0d">
-<meta name="color-scheme" content="dark">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Henoch-klok">
-<meta name="application-name" content="Henoch-klok">
-<title>Henoch-klok</title>
-<style>
-:root{--bg:#090a0d;--panel:#111318;--panel2:#171920;--gold:#d7b56d;--gold2:#f1d48d;--text:#f4f1e8;--muted:#9699a3;--line:#292c35;--ring:#252833;--day:#d7b56d;--night:#252833;--good:#94c98b}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -10%,#202027 0,#090a0d 45%);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body{display:flex;justify-content:center;padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom)}
-.app{width:min(620px,100%);min-height:100vh}
-header{padding:20px 3px 10px;text-align:center}.eyebrow{font-size:.69rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--gold)}
-h1{margin:5px 0 2px;font-size:clamp(1.7rem,7vw,2.5rem);letter-spacing:-.035em}.subtitle{color:var(--muted);font-size:.8rem}
-.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:8px 0 12px;position:sticky;top:0;z-index:5;padding:5px 0;background:#090a0dE8;backdrop-filter:blur(10px)}
-.tab{padding:10px 7px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--muted);font:inherit;font-size:.72rem;font-weight:700;cursor:pointer}.tab.active{border-color:#7c683d;background:#1b1913;color:var(--gold2)}
-.panel{display:none}.panel.active{display:block}
-.hero{background:linear-gradient(145deg,#161820,#0f1015);border:1px solid var(--line);border-radius:26px;padding:19px 15px 18px;box-shadow:0 18px 55px #0007}
-.henoch-clock-label{text-align:center;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.16em;margin-bottom:2px}.henoch-clock{text-align:center;font-size:clamp(3rem,15vw,5.8rem);line-height:1;font-weight:850;letter-spacing:.02em;color:var(--gold2);text-shadow:0 0 28px #d7b56d25;margin:0 0 8px;font-variant-numeric:tabular-nums}.part-label{text-align:center;color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.13em}.part{text-align:center;font-size:clamp(3.4rem,17vw,6rem);line-height:1;margin:5px 0 13px;font-weight:800;color:var(--gold2);text-shadow:0 0 28px #d7b56d25}
-.ring-wrap{position:relative;width:min(68vw,270px);aspect-ratio:1;margin:0 auto 15px}.ring-wrap svg{width:100%;height:100%;transform:rotate(-90deg)}.ring-bg{fill:none;stroke:var(--ring);stroke-width:10}.ring{fill:none;stroke:var(--gold);stroke-width:10;stroke-linecap:round;filter:drop-shadow(0 0 6px #d7b56d55)}
-.ring-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column}.countdown{font-variant-numeric:tabular-nums;font-size:clamp(2rem,9vw,3.1rem);font-weight:750}.next{color:var(--muted);font-size:.76rem;margin-top:3px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:12px;min-width:0}.label{color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.1em}.value{margin-top:4px;font-size:1.02rem;font-weight:650;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.status{margin-top:10px;padding:11px 13px;background:#111318;border:1px solid var(--line);border-radius:13px;color:var(--muted);font-size:.75rem;line-height:1.45}.status strong{color:var(--text)}
-.actions{display:flex;gap:8px;margin-top:10px}.button{flex:1;border:1px solid #3a3d47;border-radius:12px;background:#171920;color:var(--text);padding:11px 9px;font:inherit;font-size:.78rem;font-weight:650;cursor:pointer}.button.primary{border-color:#806b3f;color:var(--gold2)}.button:active{transform:scale(.98)}
-.section-title{font-size:1.2rem;margin:5px 2px 4px}.section-sub{color:var(--muted);font-size:.75rem;margin:0 2px 11px;line-height:1.45}
-.timeline{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:13px}.timeline-bar{height:30px;border-radius:10px;overflow:hidden;position:relative;background:var(--night);border:1px solid #343742}.timeline-day{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,#ac8d52,#efd48e);opacity:.94}.timeline-marker{position:absolute;top:-3px;width:3px;height:36px;background:#fff;box-shadow:0 0 9px #fff}.timeline-sun{position:absolute;top:7px;width:1px;height:16px;background:#ffffff99}.timeline-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:.68rem;margin-top:6px}.timeline-stat{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.subtimeline{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.subtimeline-title{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}.progress-track{height:18px;border-radius:8px;background:var(--night);border:1px solid #343742;position:relative;overflow:hidden}.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#ac8d52,#efd48e)}.progress-marker{position:absolute;top:-2px;width:3px;height:22px;background:#fff;box-shadow:0 0 8px #fff}.planner-top-actions{display:flex;gap:8px;margin-bottom:10px}.planner-top-actions .button{flex:1}.plan-row.quiet{opacity:.86}.plan-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.plan-slot{background:#0e0f13;border:1px solid #333640;border-radius:10px;padding:7px}.plan-slot-label{font-size:.6rem;color:var(--muted);margin-bottom:4px}.plan-slot textarea{min-height:58px;margin-top:0}.feast-list{display:flex;flex-direction:column;gap:9px}.feast-card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:12px}.feast-card.next{border-color:#806b3f;background:linear-gradient(145deg,#191710,#111318)}.feast-name{font-weight:800;color:var(--gold2);font-size:1rem}.feast-date{margin-top:3px;font-size:.72rem;color:var(--muted)}.feast-count{margin-top:7px;font-size:1.5rem;font-weight:800;font-variant-numeric:tabular-nums}.feast-note{margin-top:4px;color:var(--muted);font-size:.68rem;line-height:1.45}.stat{padding:10px;border:1px solid var(--line);border-radius:12px;background:#0f1014}.stat b{display:block;font-size:.98rem}.stat span{display:block;color:var(--muted);font-size:.67rem;margin-top:2px}
-.hebrew{margin-top:10px;background:linear-gradient(145deg,#171711,#111318);border:1px solid #493f28;border-radius:17px;padding:14px}.hebrew-main{font-size:1.27rem;font-weight:760;color:var(--gold2)}.hebrew-sub{margin-top:4px;font-size:.9rem}.hebrew-note{margin-top:8px;color:var(--muted);font-size:.68rem;line-height:1.45}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:15px}.hour-table{width:100%;border-collapse:collapse;min-width:510px;background:var(--panel)}.hour-table th,.hour-table td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:.72rem}.hour-table th{color:var(--gold2);font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;background:#15171d;position:sticky;top:0}.hour-table tr.current{background:#221f16}.hour-table tr:last-child td{border-bottom:0}.symbol{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#252833;border:1px solid #3a3e49;font-size:.82rem;color:#d9dce3}.symbol.day{background:#54472a;border-color:#806b3f;color:#f1d48d}.symbol.night{background:#16181e;border-color:#2d3039;color:#656a78;filter:brightness(.72)}.badge{display:inline-block;padding:3px 7px;border-radius:99px;border:1px solid #624f2d;color:var(--gold2);font-size:.66rem}
-.planner-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.field{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:10px}.field label{display:block;color:var(--muted);font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}.field input,.field select{width:100%;background:#0e0f13;border:1px solid #333640;border-radius:9px;color:var(--text);padding:8px;font:inherit;font-size:.8rem}
-.plan-list{display:flex;flex-direction:column;gap:8px}.plan-row{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px}.plan-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.plan-title{font-weight:750;color:var(--gold2);font-size:.82rem}.plan-time{font-size:.68rem;color:var(--muted);font-variant-numeric:tabular-nums}.plan-row textarea{width:100%;margin-top:7px;resize:vertical;min-height:54px;background:#0e0f13;color:var(--text);border:1px solid #333640;border-radius:9px;padding:8px;font:inherit;font-size:.78rem;line-height:1.35}.save-state{font-size:.68rem;color:var(--good);margin:7px 2px}.export-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.export-help{color:var(--muted);font-size:.68rem;line-height:1.45;margin:8px 2px 0}
-.sponsor-box{margin-top:14px;padding-top:4px;border-top:1px solid var(--line)}.sponsor-message{width:100%;min-height:130px;resize:vertical;background:#0e0f13;color:var(--text);border:1px solid #493f28;border-radius:11px;padding:11px;font:inherit;font-size:.8rem;line-height:1.5}.sponsor-message:focus{outline:none;border-color:#806b3f}
-footer{text-align:center;color:#686b75;font-size:.68rem;padding:16px 8px 25px;line-height:1.5}
-@media (min-width:600px){body{padding-top:18px}.app{min-height:auto}}
-</style>
-
-<style id="v16-final-css">
-.plan-grid{display:flex!important;flex-direction:column!important;gap:7px!important}
-.plan-slot{width:100%!important;box-sizing:border-box}
-.yearbar .year-labels{display:grid!important;grid-template-columns:1fr auto 1fr!important;align-items:center!important;column-gap:12px!important;width:100%!important}
-.yearbar .year-labels span:first-child{text-align:left!important}
-.yearbar .year-labels span:nth-child(2){text-align:center!important}
-.yearbar .year-labels span:last-child{text-align:right!important}
-.v16-month-row{position:relative;height:18px;margin-top:5px;color:var(--muted);font-size:.60rem;line-height:18px}
-.v16-month-row span{position:absolute;transform:translateX(-50%);width:18px;text-align:center;white-space:nowrap}
-.v16-feast-marker{position:absolute!important;top:1px!important;bottom:1px!important;width:5px!important;border-radius:3px!important;background:#c4a45f!important;box-shadow:0 0 0 1px rgba(215,181,109,.5)!important;z-index:8!important;pointer-events:auto!important}
-</style>
-
-<style id="v18-css">
-.hour-group-row{cursor:pointer!important;background:#15171d!important}.hour-group-row td{padding:11px 8px!important;color:var(--gold2)!important;font-weight:700!important}.hour-group-row .group-chevron{display:inline-block;width:18px;text-align:center;margin-right:5px}.hour-group-row .group-count{float:right;color:var(--muted);font-weight:500}.v17-month-row{height:22px!important;margin-top:7px!important;position:relative!important}.v17-month-row span{position:absolute!important;transform:translateX(-50%)!important;width:20px!important;text-align:center!important}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veldboek Bestandsserver</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h2 { margin-top: 0; font-size: 1.2rem; color: #111; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .section { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+        input[type="text"], input[type="password"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        button:hover { background-color: #0052a3; }
+        button.delete { background-color: #cc0000; padding: 5px 10px; font-size: 0.8rem; }
+        button.delete:hover { background-color: #a30000; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; font-size: 0.9rem; }
+        th { background-color: #fafafa; }
+        .status { font-size: 0.85rem; color: #666; margin-top: 5px; }
+    </style>
 </head>
 <body>
-<div class="app">
-<header>
-<div class="eyebrow">Astronomische tijdrekening</div>
-<h1>Henoch-klok</h1>
-<div class="subtitle">18 Henoch-uren · 80 echte minuten per Henoch-uur · v1.8 (Hersteld)</div>
-</header>
-<nav class="tabs" aria-label="Navigatie">
-<button class="tab active" data-tab="home">Nu</button>
-<button class="tab" data-tab="hours">Onze uren</button>
-<button class="tab" data-tab="plan">Planning</button>
-<button class="tab" data-tab="feasts">Feesten</button>
-</nav>
-<div class="hebrew"><div class="label">Hebreeuwse datum · maanwaarneming</div><div class="hebrew-main" id="hebrewDate">—</div><div class="hebrew-sub" id="hebrewWeekday">—</div><div class="hebrew-note" id="moonNote">—</div></div>
 
-<section id="home" class="panel active">
-<div class="hero">
-<div class="henoch-clock-label" style="display:none;">Henoch-tijd</div><div class="henoch-clock" id="henochTime" style="display:none;">--:--</div>
-<div class="part-label">Actief Henoch-uur</div><div class="part" id="part">—</div>
-<div class="ring-wrap"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="ring-bg" cx="60" cy="60" r="50"/><circle class="ring" id="ring" cx="60" cy="60" r="50" stroke-dasharray="314.159" stroke-dashoffset="314.159"/></svg><div class="ring-center"><div class="countdown" id="countdown">--:--</div><div class="next" id="next">Henoch-klok · 1/60</div></div></div>
-<div class="grid">
-<div class="card"><div class="label">Lokale tijd</div><div class="value" id="clock">--:--:--</div></div>
-<div class="card"><div class="label">Dag begint · civiele schemering</div><div class="value" id="sunrise">--:--</div></div>
-<div class="card"><div class="label">Zonsondergang</div><div class="value" id="sunset">--:--</div></div>
-<div class="card"><div class="label">Etmaal</div><div class="value" id="dayPct">--%</div></div>
-</div>
-<div class="timeline" style="margin-top:10px">
-<div class="label" style="margin-bottom:7px">Dag & nacht · positie in het etmaal</div>
-<div class="timeline-bar"><div class="timeline-day" id="dayBand"></div><div class="timeline-sun" id="sunriseMark"></div><div class="timeline-sun" id="sunsetMark"></div><div class="timeline-marker" id="nowMarker"></div></div>
-<div class="timeline-labels"><span>00:00</span><span>12:00</span><span>24:00</span></div>
-<div class="subtimeline"><div class="subtimeline-title">Daglicht · positie in de dag</div><div class="progress-track"><div class="progress-fill" id="dayLightFill"></div><div class="progress-marker" id="dayLightMarker"></div></div><div class="timeline-labels"><span>start schemering</span><span id="dayLightPct">0%</span><span>zonsondergang</span></div></div><div class="subtimeline"><div class="subtimeline-title">Nacht · positie in de nacht</div><div class="progress-track"><div class="progress-fill" id="nightFill"></div><div class="progress-marker" id="nightMarker"></div></div><div class="timeline-labels"><span>zonsondergang</span><span id="nightPct">0%</span><span>civiele schemering</span></div></div><div class="timeline-stat"><div class="stat"><b id="dayLightDur">--</b><span>daglichtduur</span></div><div class="stat"><b id="nightDur">--</b><span>nachtduur</span></div></div>
-</div>
-<div class="grid"><div class="card" style="display:none;"><div class="label">Datum</div><div class="value" id="date">—</div></div><div class="card"><div class="label">Locatie</div><div class="value" id="location">Nederland</div></div></div>
-<div class="status" id="status"><strong>Locatie:</strong> standaardpositie Nederland wordt gebruikt. GPS kan hieronder worden ingeschakeld.</div>
-<div class="actions"><button class="button primary" id="gpsBtn">Gebruik GPS</button><button class="button" id="refreshBtn">Herbereken</button></div>
-</div></section>
+<div class="container">
+    <h2>Veldboek Bestandsserver</h2>
 
-<section id="hours" class="panel">
-<div class="hero">
-<h2 class="section-title">Henoch-uren</h2>
-<p class="section-sub">De dag begint bij civiele schemering. Ieder Henoch-uur duurt exact 80 echte minuten. Het Henoch-etmaal begint bij zonsondergang; vanaf daar loopt Henoch-uur 1, 2, 3 enzovoort. De uren worden automatisch verdeeld in <strong>dag</strong> en <strong>nacht</strong> op basis van civiele schemering en zonsondergang.</p>
-<div class="table-wrap"><table class="hour-table"><thead><tr><th></th><th>Henoch-uur</th><th>Start</th><th>Einde</th></tr></thead><tbody id="henochBody"></tbody></table></div>
-<p class="section-sub" style="margin-top:10px">De dag/nacht-indeling volgt het Henoch-uur waarin het midden van het uur valt. Daardoor blijft ieder Henoch-uur één duidelijk uur.</p>
-</div></section>
+    <!-- Instellingen (GitHub Koppeling) -->
+    <div class="section">
+        <h3>1. GitHub Koppeling</h3>
+        <input type="text" id="repoOwner" placeholder="Jouw GitHub Gebruikersnaam">
+        <input type="text" id="repoName" placeholder="Repository Naam (bijv. veldboek-data)">
+        <input type="password" id="gitToken" placeholder="GitHub Personal Access Token (PAT)">
+        <button onclick="saveSettings()">Instellingen Opslaan</button>
+        <div id="settingsStatus" class="status"></div>
+    </div>
 
-<section id="plan" class="panel">
-<div class="hero">
-<h2 class="section-title">Planning per Henoch-uur</h2>
-<p class="section-sub">De planning begint standaard om 05:00 onze tijd. Elk Henoch-uur is verdeeld in vier blokken van 20 echte minuten. Lege blokken nemen de vorige ingevulde activiteit over; met <strong>-</strong> zet je bewust niets op dat moment.</p>
-<div class="planner-controls">
-<div class="field"><label for="planDate">Datum</label><input id="planDate" type="date"></div>
-<div class="field"><label>Locatie</label><input id="planLocation" type="text" readonly></div>
-</div>
-<div class="planner-top-actions"><button class="button" id="addPrevHourBtn">← Vorig Henoch-uur toevoegen</button><button class="button" id="removePrevHourBtn">Vorig uur verwijderen →</button></div>
-<div class="save-state" id="saveState">Automatisch lokaal opgeslagen.</div>
-<div id="planList" class="plan-list"></div>
-<div class="export-actions">
-  <button class="button primary" id="docBtn">Export .doc</button>
-  <button class="button primary" id="icsBtn">Google Calendar .ics</button>
-  <button class="button" id="txtBtn">Export .txt</button>
-</div>
-<div class="sponsor-box">
-  <h3 class="section-title">Bericht voor S.L.A. sponsor</h3>
-  <p class="section-sub">De tekst gebruikt je uiteindelijke activiteiten, waarbij opeenvolgende lege blokken doorlopen. Het bericht begint altijd met <strong>*For Today*</strong>.</p>
-  <textarea id="sponsorMessage" class="sponsor-message" readonly placeholder="Vul eerst je planning in…"></textarea>
-  <div class="export-actions"><button class="button primary" id="generateSponsorBtn">Genereer bericht</button><button class="button" id="copySponsorBtn">Kopieer bericht</button></div>
-  <div class="save-state" id="sponsorState">Nog geen bericht gegenereerd.</div>
-</div>
-<p class="export-help">De .ics-export kan in Google Calendar worden geïmporteerd. De .doc-export is Word-compatibel.</p>
-</div></section>
+    <!-- Bestand Uploaden -->
+    <div class="section">
+        <h3>2. Bestand Uploaden (vanaf telefoon/pc)</h3>
+        <input type="file" id="fileInput">
+        <button onclick="uploadFile()">Upload naar Veldboek</button>
+        <div id="uploadStatus" class="status"></div>
+    </div>
 
-<section id="feasts" class="panel">
-<div class="hero">
-<h2 class="section-title">Bijbelse feesten</h2>
-<p class="section-sub">De lijst gebruikt de Hebreeuwse kalender en toont het eerstvolgende feest bovenaan. De telling telt tot het begin van het feest bij zonsondergang.</p>
-<div id="feastList" class="feast-list"></div>
-</div></section>
-
-<footer>Alles wordt lokaal berekend. Geen externe API's of libraries. Civiele schemering en zonsondergang gebruiken een NOAA-gebaseerde berekening; de maanwaarneming is een astronomische benadering.</footer>
+    <!-- Bestanden Lijst -->
+    <div class="section">
+        <h3>3. Beschikbare Bestanden</h3>
+        <button onclick="loadFiles()">Lijst Verversen</button>
+        <table id="fileTable">
+            <thead>
+                <tr>
+                    <th>Bestandsnaam</th>
+                    <th>Acties</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="2">Nog niet geladen of geen instellingen.</td></tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-"use strict";
-const FALLBACK = {lat: 52.155, lon: 5.387, name: "Nederland (standaard)"};
-let locationData = {...FALLBACK}, sunriseDate = null, sunsetDate = null, lastCalcKey = "";
-const $ = id => document.getElementById(id), pad = n => String(n).padStart(2, "0");
-const DAY = 86400000, PART = 80 * 60000, C = 2 * Math.PI * 50;
+    // Laad opgeslagen instellingen bij openen
+    window.onload = function() {
+        if(localStorage.getItem('repoOwner')) document.getElementById('repoOwner').value = localStorage.getItem('repoOwner');
+        if(localStorage.getItem('repoName')) document.getElementById('repoName').value = localStorage.getItem('repoName');
+        if(localStorage.getItem('gitToken')) document.getElementById('gitToken').value = localStorage.getItem('gitToken');
+        if(localStorage.getItem('repoOwner') && localStorage.getItem('repoName')) {
+            loadFiles();
+        }
+    };
 
-function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
-function degToRad(x) { return x * Math.PI / 180; }
-function radToDeg(x) { return x * 180 / Math.PI; }
-function dayOfYear(d) { const s = new Date(d.getFullYear(), 0, 0); return Math.floor((d - s) / DAY); }
-function fmtTime(d, sec = true) { return sec ? `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` : `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
-function fmtDate(d) { return new Intl.DateTimeFormat("nl-NL", {weekday: "long", day: "numeric", month: "long", year: "numeric"}).format(d); }
-
-function solarEvent(date, lat, lon, isSunrise, zenith = 90.833) {
-  const year = date.getFullYear(), doy = dayOfYear(date), lngHour = lon / 15;
-  const approxHour = isSunrise ? 6 : 18, t = doy + ((approxHour - lngHour) / 24);
-  const M = .9856 * t - 3.289;
-  let L = M + 1.916 * Math.sin(degToRad(M)) + .020 * Math.sin(degToRad(2 * M)) + 282.634;
-  L = ((L % 360) + 360) % 360;
-  let RA = radToDeg(Math.atan(.91764 * Math.tan(degToRad(L))));
-  RA = ((RA % 360) + 360) % 360;
-  RA += (Math.floor(L / 90) * 90 - Math.floor(RA / 90) * 90);
-  RA /= 15;
-  const sinDec = .39782 * Math.sin(degToRad(L)), cosDec = Math.cos(Math.asin(sinDec));
-  const cosH = (Math.cos(degToRad(zenith)) - sinDec * Math.sin(degToRad(lat))) / (cosDec * Math.cos(degToRad(lat)));
-  if (cosH > 1 || cosH < -1) return null;
-  const H = radToDeg(Math.acos(clamp(cosH, -1, 1))) / 15 * (isSunrise ? -1 : 1);
-  let UT = H + RA - .06571 * t - 6.622 - lngHour;
-  UT = ((UT % 24) + 24) % 24;
-  return new Date(Date.UTC(year, date.getMonth(), date.getDate(), 0, 0, 0, 0) + UT * 3600000);
-}
-
-function calculateSunTimes(date) {
-  return {
-    civilDawn: solarEvent(date, locationData.lat, locationData.lon, true, 96),
-    sunrise: solarEvent(date, locationData.lat, locationData.lon, true, 90.833),
-    sunset: solarEvent(date, locationData.lat, locationData.lon, false, 90.833),
-    civilDusk: solarEvent(date, locationData.lat, locationData.lon, false, 96)
-  };
-}
-
-function cycleStartForDate(date) { return calculateSunTimes(date).sunset; }
-
-function moonEquatorial(jd) {
-  const d = jd - 2451543.5, N = 125.1228 - .0529538083 * d, i = 5.1454, w = 318.0634 + .1643573223 * d, a = 60.2666, e = .0549, M = 115.3654 + 13.0649929509 * d;
-  const E = M + e * radToDeg(Math.sin(degToRad(M))) * (1 + e * Math.cos(degToRad(M)));
-  const xv = a * (Math.cos(degToRad(E)) - e), yv = a * Math.sqrt(1 - e * e) * Math.sin(degToRad(E)), v = radToDeg(Math.atan2(yv, xv)), r = Math.sqrt(xv * xv + yv * yv);
-  let xh = r * (Math.cos(degToRad(N)) * Math.cos(degToRad(v + w)) - Math.sin(degToRad(N)) * Math.sin(degToRad(v + w)) * Math.cos(degToRad(i)));
-  let yh = r * (Math.sin(degToRad(N)) * Math.cos(degToRad(v + w)) + Math.cos(degToRad(N)) * Math.sin(degToRad(v + w)) * Math.cos(degToRad(i)));
-  let zh = r * Math.sin(degToRad(v + w)) * Math.sin(degToRad(i));
-  const lon = radToDeg(Math.atan2(yh, xh)), lat = radToDeg(Math.atan2(zh, Math.sqrt(xh * xh + yh * yh)));
-  const eps = 23.4393 - .0000004 * d, xe = Math.cos(degToRad(lon)) * Math.cos(degToRad(lat)), ye = Math.sin(degToRad(lon)) * Math.cos(degToRad(lat)), ze = Math.sin(degToRad(lat));
-  return {ra: radToDeg(Math.atan2(ye * Math.cos(degToRad(eps)) - ze * Math.sin(degToRad(eps)), xe)) / 15, dec: radToDeg(Math.asin(ye * Math.sin(degToRad(eps)) + ze * Math.cos(degToRad(eps)))), lon};
-}
-
-function jdFromDate(d) { return d.getTime() / 86400000 + 2440587.5; }
-function lstHours(d, lon) { const jd = jdFromDate(d), T = (jd - 2451545) / 36525, gmst = 280.46061837 + 360.98564736629 * (jd - 2451545) + .000387933 * T * T - T * T * T / 38710000; return ((gmst + lon) / 15 % 24 + 24) % 24; }
-function moonAltitude(d, lat, lon) { const m = moonEquatorial(jdFromDate(d)), H = (lstHours(d, lon) - m.ra) * 15; return radToDeg(Math.asin(Math.sin(degToRad(lat)) * Math.sin(degToRad(m.dec)) + Math.cos(degToRad(lat)) * Math.cos(degToRad(m.dec)) * Math.cos(degToRad(H)))); }
-
-function estimateVisibleCrescent(date) {
-  const base = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 19, 0, 0);
-  let best = null;
-  for (let k = 0; k < 5; k++) {
-    const d = new Date(base.getTime() - k * DAY); const st = calculateSunTimes(d); if (!st.sunset) continue;
-    const obs = new Date(st.sunset.getTime() + 25 * 60000); const age = ((jdFromDate(obs) - 2451550.25972) % 29.530588853 + 29.530588853) % 29.530588853;
-    const elong = Math.min(age, 29.530588853 - age) / 29.530588853 * 360; const alt = moonAltitude(obs, locationData.lat, locationData.lon);
-    if (age >= .65 && age <= 2.15 && elong >= 8 && alt >= 4) { best = {date: new Date(d.getFullYear(), d.getMonth(), d.getDate()), age, alt, elong}; break; }
-  }
-  return best;
-}
-
-const hebrewMonths = {Tishri: "Tishri", Heshvan: "Heshvan", Kislev: "Kislev", Tevet: "Tevet", Shevat: "Shevat", Adar: "Adar", Nisan: "Nisan", Iyar: "Iyar", Sivan: "Sivan", Tamuz: "Tamuz", Av: "Av", Elul: "Elul"};
-const weekTrans = {Sunday: "Yom Rishon", Monday: "Yom Sheni", Tuesday: "Yom Shlishi", Wednesday: "Yom Revi'i", Thursday: "Yom Chamishi", Friday: "Yom Shishi", Saturday: "Shabbat"};
-
-function hebrewParts(date) {
-  try {
-    const f = new Intl.DateTimeFormat("en-u-ca-hebrew", {day: "numeric", month: "long", year: "numeric"});
-    const parts = {}; for (const p of f.formatToParts(date)) if (p.type !== "literal") parts[p.type] = p.value;
-    const wd = new Intl.DateTimeFormat("en-US", {weekday: "long"}).format(date);
-    return {day: parts.day, month: hebrewMonths[parts.month] || parts.month, year: parts.year, weekday: weekTrans[wd] || wd};
-  } catch(e) { return {day: "—", month: "—", year: "—", weekday: "—"}; }
-}
-
-function updateHebrew(now) {
-  const useDate = (sunsetDate && now < sunsetDate) ? new Date(now.getTime() - DAY) : new Date(now);
-  const h = hebrewParts(useDate), todayH = hebrewParts(now), cres = estimateVisibleCrescent(useDate);
-  $("hebrewDate").textContent = `${h.day} ${h.month} ${h.year}`;
-  $("hebrewWeekday").textContent = todayH.weekday;
-  $("moonNote").textContent = cres ? `Geschatte eerste zichtbare maansikkel voor deze maand: ${new Intl.DateTimeFormat("nl-NL", {weekday: "long", day: "numeric", month: "long"}).format(cres.date)}. Maanhoogte bij de controle: ${cres.alt.toFixed(1)}°.` : "Geen betrouwbare maansikkelinschatting voor deze datum/locatie.";
-  if ($('gregorianDateTop'))$('gregorianDateTop').textContent = fmtDate(now);
-}
-
-function recalculate(now = new Date()) {
-  const key = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${locationData.lat.toFixed(5)}-${locationData.lon.toFixed(5)}`;
-  if (key === lastCalcKey && sunriseDate) return;
-  lastCalcKey = key;
-  const x = calculateSunTimes(now); sunriseDate = x.civilDawn; sunsetDate = x.sunset;
-  $("sunrise").textContent = sunriseDate ? fmtTime(sunriseDate, false) : "—";
-  $("sunset").textContent = sunsetDate ? fmtTime(sunsetDate, false) : "—";
-  $("location").textContent = locationData.name;
-  if ($("planLocation")) $("planLocation").value = locationData.name;
-  updateTimeline(now); updateHebrew(now); buildHourTables(now); buildPlannerV11(); buildFeasts(now);
-}
-
-function updateTimeline(now) {
-  const today = calculateSunTimes(now), dawn = today.civilDawn, sunset = today.sunset; if (!dawn || !sunset) return;
-  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-  const s = (dawn - dayStart) / DAY * 100, e = (sunset - dayStart) / DAY * 100, n = (now - dayStart) / DAY * 100;
-  if ($("dayBand")) { $("dayBand").style.left = `${clamp(s, 0, 100)}%`; $("dayBand").style.width = `${clamp(e - s, 0, 100)}%`; }
-  if ($('sunriseMark'))$('sunriseMark').style.left = `${clamp(s, 0, 100)}%`;
-  if ($('sunsetMark'))$('sunsetMark').style.left = `${clamp(e, 0, 100)}%`;
-  if ($('nowMarker'))$('nowMarker').style.left = `${clamp(n, 0, 100)}%`;
-
-  let cycleStart = sunset;
-  if (now < cycleStart) {
-    const prev = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-    cycleStart = calculateSunTimes(prev).sunset;
-  }
-  const cycleP = cycleStart ? clamp((now - cycleStart) / DAY, 0, 1) : 0;
-  if ($('dayPct'))$('dayPct').textContent = `${Math.round(cycleP * 100)}%`;
-
-  const dayMs = Math.max(1, sunset - dawn);
-  const dayP = (now >= dawn && now < sunset) ? clamp((now - dawn) / dayMs, 0, 1) : 1;
-  if ($('dayLightPct'))$('dayLightPct').textContent = `${Math.round(dayP * 100)}%`;
-  if ($('dayLightFill'))$('dayLightFill').style.width = `${dayP * 100}%`;
-  if ($('dayLightMarker'))$('dayLightMarker').style.left = `calc(${dayP * 100}% - 1px)`;
-
-  let nightStart, nextDawn;
-  if (now >= sunset) {
-    nightStart = sunset;
-    nextDawn = calculateSunTimes(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)).civilDawn;
-  } else {
-    const prev = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-    nightStart = calculateSunTimes(prev).sunset;
-    nextDawn = dawn;
-  }
-  const nightMs = Math.max(1, nextDawn - nightStart);
-  const nightP = (now >= dawn && now < sunset) ? 1 : clamp((now - nightStart) / nightMs, 0, 1);
-  if ($('nightPct'))$('nightPct').textContent = `${Math.round(nightP * 100)}%`;
-  if ($('nightFill'))$('nightFill').style.width = `${nightP * 100}%`;
-  if ($('nightMarker'))$('nightMarker').style.left = `calc(${nightP * 100}% - 1px)`;
-  if ($('dayLightDur'))$('dayLightDur').textContent = `${Math.round(dayMs / 60000)} min`;
-  if ($('nightDur'))$('nightDur').textContent = `${Math.round(nightMs / 60000)} min`;
-}
-
-function cyclePartsForDate(baseDate) {
-  const sun = calculateSunTimes(baseDate); if (!sun.sunset) return [];
-  const rows = [];
-  const nextDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + 1);
-  const next = calculateSunTimes(nextDate), nextDawn = next.civilDawn, nextSunset = next.sunset;
-  for (let i = 0; i < 18; i++) {
-    const a = new Date(sun.sunset.getTime() + i * PART), b = new Date(a.getTime() + PART), mid = new Date(a.getTime() + PART / 2);
-    const isDay = nextDawn && nextSunset ? (mid >= nextDawn && mid < nextSunset) : false;
-    const type = isDay ? 'Dag' : 'Nacht', typeIndex = rows.filter(r => r.type === type).length + 1;
-    rows.push({index: i, start: a, end: b, mid, type, typeIndex});
-  }
-  return rows;
-}
-
-function henochHourAt(dateTime, baseDate) {
-  let rows = cyclePartsForDate(baseDate); if (!rows.length) return null;
-  if (dateTime < rows[0].start) { const prev = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() - 1); rows = cyclePartsForDate(prev); }
-  if (!rows.length) return null;
-  let t = dateTime.getTime() - rows[0].start.getTime(); while (t < 0) t += DAY; while (t >= DAY) t -= DAY;
-  const index = clamp(Math.floor(t / PART), 0, 17), elapsed = t - index * PART, row = rows[index];
-  return {...row, index, elapsed};
-}
-
-function buildHourTables(now) {
-  const rows = cyclePartsForDate(now); if (!rows.length) { $('henochBody').innerHTML = ''; return; }
-  window.__henochHourGroups = window.__henochHourGroups || {Nacht: false, Dag: false};
-  const groups = [['Nacht', rows.filter(r => r.type === 'Nacht')], ['Dag', rows.filter(r => r.type === 'Dag')]];
-  let html = '';
-  for (const [type, list] of groups) {
-    const open = !!window.__henochHourGroups[type], icon = type === 'Nacht' ? '☾' : '☀';
-    html += `<tr class="hour-group-row" data-group="${type}"><td colspan="4"><span class="group-chevron">${open ? '▾' : '▸'}</span>${icon} ${type}<span class="group-count">${list.length} uur</span></td></tr>`;
-    if (open) {
-      for (const r of list) {
-        const current = now >= r.start && now < r.end;
-        const symbol = type === 'Nacht' ? '<span class="symbol night" title="Nacht">☾</span>' : '<span class="symbol day" title="Dag">☀</span>';
-        html += `<tr class="${current ? 'current' : ''}"><td>${symbol}</td><td><span class="badge">${type} ${r.typeIndex}</span></td><td>${fmtTime(r.start, false)}</td><td>${fmtTime(r.end, false)}</td></tr>`;
-      }
+    function saveSettings() {
+        localStorage.setItem('repoOwner', document.getElementById('repoOwner').value.trim());
+        localStorage.setItem('repoName', document.getElementById('repoName').value.trim());
+        localStorage.setItem('gitToken', document.getElementById('gitToken').value.trim());
+        document.getElementById('settingsStatus').innerText = "Instellingen opgeslagen!";
+        loadFiles();
     }
-  }
-  $('henochBody').innerHTML = html;
-  $('henochBody').querySelectorAll('.hour-group-row').forEach(row => row.addEventListener('click', () => {
-    const g = row.dataset.group; window.__henochHourGroups[g] = !window.__henochHourGroups[g];
-    buildHourTables(new Date());
-  }));
-}
 
-/* Planner v1.1 Logica */
-function planStateKey(ds) { return `henoch-plan-v11-window-${ds}`; }
-function planBounds(ds) { const [y, m, d] = ds.split('-').map(Number); return {midnight: new Date(y, m - 1, d, 0, 0, 0, 0).getTime(), defaultStart: new Date(y, m - 1, d, 5, 0, 0, 0).getTime(), defaultEnd: new Date(y, m - 1, d + 1, 0, 0, 0, 0).getTime()}; }
-function planState(ds) { const b = planBounds(ds); let obj = {start: b.defaultStart, end: b.defaultEnd}; try { const x = JSON.parse(localStorage.getItem(planStateKey(ds)) || 'null'); if (x) { obj.start = clamp(Number(x.start) || b.defaultStart, b.midnight, b.defaultEnd); obj.end = Math.max(b.defaultEnd, Math.min(Number(x.end) || b.defaultEnd, b.defaultEnd + PART)); } } catch (e) {} return obj; }
-function savePlanState(ds, st) { localStorage.setItem(planStateKey(ds), JSON.stringify(st)); }
-function planBlocksV11(ds) { const b = planBounds(ds), st = planState(ds), rows = []; for (let t = st.start; t < st.end; t += 20 * 60000) { const a = new Date(t), e = new Date(Math.min(t + 20 * 60000, st.end)), h = henochHourAt(a, a); if (h) rows.push({start: a, end: e, h, key: `${ds}|${a.getTime()}`}); } return rows; }
-function plansLoad(ds) { try { return JSON.parse(localStorage.getItem(`henoch-plan-${ds}`) || '{}') || {}; } catch (e) { return {}; } }
-function plansSave(ds, p) { localStorage.setItem(`henoch-plan-${ds}`, JSON.stringify(p)); if ($('saveState'))$('saveState').textContent = `Lokaal opgeslagen · ${new Date().toLocaleTimeString('nl-NL', {hour: '2-digit', minute: '2-digit'})}`; }
-function effective(rows, plans) { let prev = ''; return rows.map(r => { const raw = String(plans[r.key] ?? '').trim(); let eff; if (raw === '-') eff = ''; else if (raw === '') eff = prev; else eff = raw; prev = eff; return {...r, raw, eff}; }); }
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c])); }
-
-function buildPlannerV11() {
-  const ds = $('planDate')?.value; if (!ds) return;
-  const rows = planBlocksV11(ds), plans = plansLoad(ds), vals = effective(rows, plans);
-  let html = '', last = '';
-  vals.forEach((r, i) => {
-    const hourId = `${r.h.index}-${r.h.start.getTime()}`;
-    if (hourId !== last) {
-      if (last) html += '</div></div>';
-      html += `<div class="plan-row"><div class="plan-head"><div class="plan-title">Henoch-uur ${r.h.type} ${r.h.typeIndex}</div><div class="plan-time">${fmtTime(r.h.start, false)} → ${fmtTime(r.h.end, false)}</div></div><div class="plan-grid">`;
-      last = hourId;
+    function getConfigs() {
+        return {
+            owner: localStorage.getItem('repoOwner'),
+            repo: localStorage.getItem('repoName'),
+            token: localStorage.getItem('gitToken')
+        };
     }
-    html += `<div class="plan-slot"><div class="plan-slot-label">${fmtTime(r.start, false)}–${fmtTime(r.end, false)}</div><textarea data-key="${r.key}" placeholder="Activiteit…">${escapeHtml(r.raw)}</textarea></div>`;
-    const nx = vals[i + 1]; if (!nx || `${nx.h.index}-${nx.h.start.getTime()}` !== hourId) { html += '</div></div>'; last = ''; }
-  });
-  $('planList').innerHTML = html || '<div class="section-sub">Geen planningsblokken beschikbaar.</div>';
-  const st = planState(ds), b = planBounds(ds);
-  if ($('addPrevHourBtn'))$('addPrevHourBtn').disabled = st.start <= b.midnight;
-  if ($('removePrevHourBtn'))$('removePrevHourBtn').disabled = st.start >= b.defaultStart;
-  
-  $('planList').querySelectorAll('textarea').forEach(ta => ta.addEventListener('input', () => {
-    const p = plansLoad(ds); p[ta.dataset.key] = ta.value; plansSave(ds, p); updateSponsorV11();
-  }));
-  updateSponsorV11();
-}
 
-function sponsorText() {
-  const ds = $('planDate').value, vals = effective(planBlocksV11(ds), plansLoad(ds)), out = [];
-  let active = '', start = null, end = null;
-  for (const r of vals) {
-    if (!r.eff) {
-      if (active) { out.push(`- *${fmtTime(start, false)}–${fmtTime(end, false)}:* ${active}`); active = ''; start = end = null; }
-      continue;
+    // Laad alle bestanden in de root van de repo
+    async function loadFiles() {
+        const cfg = getConfigs();
+        if(!cfg.owner || !cfg.repo) return;
+
+        const tableBody = document.querySelector("#fileTable tbody");
+        tableBody.innerHTML = `<tr><td colspan="2">Laden...</td></tr>`;
+
+        try {
+            let response = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/files`, {
+                headers: cfg.token ? { "Authorization": `token ${cfg.token}` } : {}
+            });
+            
+            if(!response.ok) {
+                // Als de map 'files' nog niet bestaat, tonen we lege lijst
+                tableBody.innerHTML = `<tr><td colspan="2">Geen map 'files' gevonden of lege repo.</td></tr>`;
+                return;
+            }
+
+            let files = await response.json();
+            tableBody.innerHTML = "";
+
+            if(files.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="2">Geen bestanden aanwezig.</td></tr>`;
+                return;
+            }
+
+            files.forEach(file => {
+                let row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><a href="${file.download_url}" target="_blank">${file.name}</a></td>
+                    <td>
+                        <a href="${file.download_url}" download class="button-link" style="margin-right:5px; text-decoration:none; background:#eee; padding:4px 8px; border-radius:3px; color:#333;">Download</a>
+                        <button class="delete" onclick="deleteFile('${file.path}', '${file.sha}')">Verwijder</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        } catch (err) {
+            tableBody.innerHTML = `<tr><td colspan="2">Fout bij laden: ${err.message}</td></tr>`;
+        }
     }
-    if (r.eff === active) { end = r.end; } 
-    else {
-      if (active) out.push(`- *${fmtTime(start, false)}–${fmtTime(end, false)}:* ${active}`);
-      active = r.eff; start = r.start; end = r.end;
+
+    // Bestand uploaden naar de map 'files/' in de repo
+    async function uploadFile() {
+        const cfg = getConfigs();
+        const fileInput = document.getElementById('fileInput');
+        const statusDiv = document.getElementById('uploadStatus');
+
+        if(!cfg.token) {
+            statusDiv.innerText = "Fout: GitHub Token ontbreekt in instellingen.";
+            return;
+        }
+        if(fileInput.files.length === 0) {
+            statusDiv.innerText = "Kies eerst een bestand.";
+            return;
+        }
+
+        let file = fileInput.files[0];
+        statusDiv.innerText = "Bezig met uploaden...";
+
+        let reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async function () {
+            // Haal de base64 string op (verwijder de data URL meta prefix)
+            let base64Content = reader.result.split(',')[1];
+            let filePath = `files/${file.name}`;
+
+            try {
+                let response = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${filePath}`, {
+                    method: 'PUT',
+                    headers: {
+                        "Authorization": `token ${cfg.token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: `Upload bestand via veldboek tool: ${file.name}`,
+                        content: base64Content
+                    })
+                });
+
+                if(response.ok) {
+                    statusDiv.innerText = "Upload gelukt!";
+                    fileInput.value = "";
+                    loadFiles();
+                } else {
+                    let errData = await response.json();
+                    statusDiv.innerText = "Fout bij upload: " + errData.message;
+                }
+            } catch (err) {
+                statusDiv.innerText = "Netwerkfout: " + errData.message;
+            }
+        };
     }
-  }
-  if (active) out.push(`- *${fmtTime(start, false)}–${fmtTime(end, false)}:* ${active}`);
-  return out.length ? `*For Today*\n${out.join('\n')}` : '*For Today*\n- ';
-}
 
-function updateSponsorV11() { if ($('sponsorMessage'))$('sponsorMessage').value = sponsorText(); }
+    // Bestand verwijderen
+    async function deleteFile(path, sha) {
+        const cfg = getConfigs();
+        if(!confirm("Weet je zeker dat je dit bestand wilt verwijderen?")) return;
 
-function downloadBlob(blob, name) { const u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 1000); }
+        try {
+            let response = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`, {
+                method: 'DELETE',
+                headers: {
+                    "Authorization": `token ${cfg.token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: `Verwijder bestand via veldboek tool: ${path}`,
+                    sha: sha
+                })
+            });
 
-function exportTXT_V11() {
-  const ds = $('planDate').value, vals = effective(planBlocksV11(ds), plansLoad(ds)), lines = [`Henoch planning · ${ds}`, ''];
-  vals.forEach(r => { if (r.eff) lines.push(`${fmtTime(r.start, false)}–${fmtTime(r.end, false)} | ${r.h.type} ${r.h.typeIndex} | ${r.eff}`); });
-  downloadBlob(new Blob([lines.join('\n')], {type: 'text/plain;charset=utf-8'}), `Henoch-planning-${ds}.txt`);
-}
-
-function exportDoc() {
-  const ds = $('planDate').value, rows = planBlocksV11(ds), vals = effective(rows, plansLoad(ds)), [y, m, d] = ds.split('-').map(Number), base = new Date(y, m - 1, d, 12), sun = calculateSunTimes(base);
-  let body = `<!doctype html><html><head><meta charset="utf-8"><title>Henoch planning ${ds}</title><style>body{font-family:Arial,sans-serif;color:#111}table{border-collapse:collapse;width:100%}th,td{border:1px solid #aaa;padding:7px;vertical-align:top}th{background:#eee}</style></head><body><h1>Henoch planning</h1><p>${fmtDate(base)} · civiele schemering ${sun.civilDawn ? fmtTime(sun.civilDawn, false) : '—'} · zonsondergang ${sun.sunset ? fmtTime(sun.sunset, false) : '—'}</p><table><tr><th>Henoch-uur</th><th>Blok</th><th>Lokale tijd</th><th>Planning</th></tr>`;
-  vals.forEach(r => { body += `<tr><td>${r.h.type} ${r.h.typeIndex}</td><td>20 min</td><td>${fmtTime(r.start, false)}–${fmtTime(r.end, false)}</td><td>${escapeHtml(r.eff || '')}</td></tr>`; });
-  body += '</table></body></html>';
-  downloadBlob(new Blob([body], {type: 'application/msword'}), `Henoch-planning-${ds}.doc`);
-}
-
-function icsDate(d) { return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`; }
-function exportICS() {
-  const ds = $('planDate').value, rows = planBlocksV11(ds), vals = effective(rows, plansLoad(ds)), tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Amsterdam';
-  let lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Henoch Klok//NL//EN', 'CALSCALE:GREGORIAN', `X-WR-TIMEZONE:${tz}`];
-  vals.forEach(r => {
-    if (!r.eff) return;
-    lines.push('BEGIN:VEVENT', `UID:henoch-${r.key}@henoch-klok`, `DTSTAMP:${icsDate(new Date())}Z`, `DTSTART;TZID=${tz}:${icsDate(r.start)}`, `DTEND;TZID=${tz}:${icsDate(r.end)}`, `SUMMARY:${r.eff.replace(/[\r\n,;]/g, ' ').slice(0, 120)}`, `DESCRIPTION:Henoch-uur ${r.h.type} ${r.h.typeIndex} · ${r.eff.replace(/[\r\n]/g, ' ')}`, 'END:VEVENT');
-  });
-  lines.push('END:VCALENDAR');
-  downloadBlob(new Blob([lines.join('\r\n')], {type: 'text/calendar;charset=utf-8'}), `Henoch-planning-${ds}.ics`);
-}
-
-/* Feesten Logica */
-function heb17(d) { const f = new Intl.DateTimeFormat('en-u-ca-hebrew', {day: 'numeric', month: 'long', year: 'numeric'}), p = {}; for (const x of f.formatToParts(d)) if (x.type !== 'literal') p[x.type] = x.value; return {day: Number(p.day), month: String(p.month), year: Number(p.year)}; }
-function gregHeb17(hy, month, day) { const a = new Date(new Date().getFullYear(), 0, 1); for (let i = -450; i <= 750; i++) { const d = new Date(a.getTime() + i * DAY), h = heb17(d); if (h.year === hy && h.month === month && h.day === day) return new Date(d.getFullYear(), d.getMonth(), d.getDate()); } return null; }
-function firstSundayAfterPesach17(hy) { const p = gregHeb17(hy, 'Nisan', 14); if (!p) return null; const d = new Date(p); d.setDate(d.getDate() + 1); while (d.getDay() !== 0) d.setDate(d.getDate() + 1); return d; }
-
-function feastDefs17(hy) {
-  const fs = firstSundayAfterPesach17(hy);
-  return [
-    {name: 'Pesach (Pascha)', day: gregHeb17(hy, 'Nisan', 14), duration: 1, desc: 'Vooravond van Pesach; de dag begint bij zonsondergang.'},
-    {name: 'Feest van Ongezuurde Broden', day: gregHeb17(hy, 'Nisan', 15), duration: 7, desc: 'Leviticus 23:6–8.'},
-    {name: 'Eerste Vruchten', day: fs, duration: 1, desc: 'Eerste Vruchten binnen de zondagstelling.'},
-    {name: 'Shavuot (Wekenfeest)', day: fs ? new Date(fs.getTime() + 49 * DAY) : null, duration: 1, desc: 'Eerste zondag na Pesach = dag 1; de 50e dag van de telling.'},
-    {name: 'Yom Teruah (Feest van Bazuinen)', day: gregHeb17(hy + 1, 'Tishri', 1), duration: 1, desc: 'Leviticus 23:23–25.'},
-    {name: 'Yom Kippur (Grote Verzoendag)', day: gregHeb17(hy + 1, 'Tishri', 10), duration: 1, desc: 'Leviticus 23:26–32.'},
-    {name: 'Sukkot (Loofhuttenfeest)', day: gregHeb17(hy + 1, 'Tishri', 15), duration: 7, desc: 'Leviticus 23:33–43.'},
-    {name: 'Shemini Atzeret (Achtste Dag)', day: gregHeb17(hy + 1, 'Tishri', 22), duration: 1, desc: 'Leviticus 23:36.'}
-  ].filter(x => x.day);
-}
-
-function countdownText(ms) {
-  if (ms <= 0) return 'Begonnen';
-  const sec = Math.floor(ms / 1000), d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
-  return `${d}d ${pad(h)}:${pad(m)}:${pad(s)}`;
-}
-
-function buildFeasts(now = new Date()) {
-  const hy = heb17(now).year;
-  let all = [...feastDefs17(hy - 1), ...feastDefs17(hy), ...feastDefs17(hy + 1)];
-  all = all.map(f => {
-    const prev = new Date(f.day.getFullYear(), f.day.getMonth(), f.day.getDate() - 1, 12);
-    const start = calculateSunTimes(prev).sunset || new Date(f.day.getFullYear(), f.day.getMonth(), f.day.getDate(), 0, 0, 0, 0);
-    const end = new Date(f.day.getTime() + f.duration * DAY);
-    return {...f, start, end};
-  }).sort((a, b) => a.start - b.start);
-
-  const upcoming = all.filter(f => f.end.getTime() > now.getTime()).slice(0, 8);
-  if (!upcoming.length) { $('feastList').innerHTML = '<div class="feast-card"><div class="feast-name">Geen feesten gevonden</div></div>'; return; }
-
-  $('feastList').innerHTML = upcoming.map((f, i) => `
-    <div class="feast-card ${i === 0 ? 'next' : ''}">
-      <div class="feast-name">${f.name}</div>
-      <div class="feast-date">${fmtDate(f.day)}</div>
-      <div class="feast-start">Begint om <strong>${fmtTime(f.start, false)}</strong> (bij zonsondergang)</div>
-      <div class="feast-count">${countdownText(f.start.getTime() - now.getTime())}</div>
-      <div class="feast-note">${f.desc}${i === 0 ? ' · eerstvolgende feest' : ''}</div>
-    </div>
-  `).join('');
-}
-
-function setLocation(lat, lon, name) {
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-  locationData = {lat, lon, name}; lastCalcKey = ""; recalculate(new Date());
-}
-
-function requestGPS() {
-  if (!navigator.geolocation) { $("status").innerHTML = "<strong>GPS:</strong> niet ondersteund."; return; }
-  $("status").innerHTML = "<strong>GPS:</strong> locatie opvragen…";
-  navigator.geolocation.getCurrentPosition(p => {
-    setLocation(p.coords.latitude, p.coords.longitude, `GPS ${p.coords.latitude.toFixed(2)}°, ${p.coords.longitude.toFixed(2)}°`);
-    $("status").innerHTML = "<strong>GPS:</strong> apparaatlocatie actief.";
-  }, () => {
-    $("status").innerHTML = "<strong>GPS:</strong> geen toestemming. Standaardpositie gebruikt.";
-    setLocation(FALLBACK.lat, FALLBACK.lon, FALLBACK.name);
-  }, {enableHighAccuracy: true, timeout: 10000, maximumAge: 300000});
-}
-
-/* Event listeners initialization (Veilig voor Tabs) */
-document.querySelectorAll(".tab").forEach(b => {
-  b.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
-    document.querySelectorAll(".panel").forEach(x => x.classList.remove("active"));
-    b.classList.add("active");
-    $(b.dataset.tab).classList.add("active");
-    if (b.dataset.tab === "hours") buildHourTables(new Date());
-    if (b.dataset.tab === "plan") buildPlannerV11();
-    if (b.dataset.tab === "feasts") buildFeasts(new Date());
-  });
-});
-
-$("gpsBtn").addEventListener("click", requestGPS);
-$("refreshBtn").addEventListener("click", () => { lastCalcKey = ""; recalculate(new Date()); });
-$("planDate").addEventListener("change", buildPlannerV11);
-$("docBtn").addEventListener("click", exportDoc);
-$("icsBtn").addEventListener("click", exportICS);
-$("txtBtn").addEventListener("click", exportTXT_V11);
-$("generateSponsorBtn").addEventListener("click", () => { updateSponsorV11(); if($('sponsorState')) $('sponsorState').textContent = 'Bericht gegenereerd.'; });$("copySponsorBtn").addEventListener("click", async () => {
-  updateSponsorV11();
-  try {
-    await navigator.clipboard.writeText($('sponsorMessage').value);
-    if($('sponsorState'))$('sponsorState').textContent = 'Gekopieerd naar klembord!';
-  } catch(e) {
-    $('sponsorMessage').select();
-    document.execCommand('copy');
-    if($('sponsorState'))$('sponsorState').textContent = 'Geselecteerd/gekopieerd.';
-  }
-});
-
-$("addPrevHourBtn").onclick = () => {
-  const ds = $('planDate').value, st = planState(ds), b = planBounds(ds);
-  st.start = Math.max(b.midnight, st.start - PART); savePlanState(ds, st); buildPlannerV11();
-};
-$("removePrevHourBtn").onclick = () => {
-  const ds = $('planDate').value, st = planState(ds), b = planBounds(ds);
-  st.start = Math.min(b.defaultStart, st.start + PART); savePlanState(ds, st); buildPlannerV11();
-};
-
-/* Startpagina Initialisatie */
-const td = new Date();
-$("planDate").value = `${td.getFullYear()}-${pad(td.getMonth() + 1)}-${pad(td.getDate())}`;
-$("planLocation").value = locationData.name;
-
-recalculate(new Date());
-
-/* Eén enkele opgeschoonde timer voor de live klok */
-setInterval(() => {
-  const now = new Date();
-  $("clock").textContent = fmtTime(now, true);
-  if (sunsetDate) {
-    let cycle = sunsetDate;
-    if (now < cycle) {
-      const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-      cycle = calculateSunTimes(y).sunset;
+            if(response.ok) {
+                loadFiles();
+            } else {
+                alert("Verwijderen mislukt.");
+            }
+        } catch (err) {
+            alert("Fout bij verwijderen.");
+        }
     }
-    if (cycle) {
-      let t = ((now - cycle) % DAY + DAY) % DAY, pe = t % PART;
-      const h = henochHourAt(now, now);
-      $('part').textContent = h ? `${h.typeIndex}` : '—';
-      const rem = Math.max(0, Math.ceil((PART - pe) / 1000));
-      $('countdown').textContent = `${pad(Math.floor(rem / 60))}:${pad(rem % 60)}`;
-      $('next').textContent = h ? `${h.type} · volgend ${h.type === 'Dag' ? 'dag' : 'nacht'}-uur ${h.typeIndex + 1}` : 'naar volgend uur';
-      $('ring').style.strokeDashoffset = String(C * (1 - pe / PART));
-    }
-    updateTimeline(now);
-    if (now.getSeconds() === 0) {
-      updateHebrew(now);
-      if ($('feasts').classList.contains('active')) buildFeasts(now);
-    }
-  }
-}, 1000);
-
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(p => setLocation(p.coords.latitude, p.coords.longitude, `GPS ${p.coords.latitude.toFixed(2)}°, ${p.coords.longitude.toFixed(2)}°`), () => {}, {enableHighAccuracy: true, timeout: 5000, maximumAge: 600000});
-}
 </script>
+
 </body>
 </html>
