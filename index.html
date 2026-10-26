@@ -3,242 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Veldboek Bestandsserver</title>
+    <title>Veldboek Bestanden</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f4f4f9;
+            background-color: #f4f4f4;
             color: #333;
-            margin: 0;
             padding: 20px;
+            margin: 0;
         }
         .container {
-            max-width: 600px;
+            max-width: 500px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        h2 { margin-top: 0; font-size: 1.2rem; color: #111; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .section { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
-        input[type="text"], input[type="password"], input[type="file"] {
+        h2 { margin-top: 0; font-size: 1.2rem; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+        button.refresh {
             width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            margin-bottom: 10px;
+            background-color: #e0e0e0;
+            color: #333;
             border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #0066cc;
-            color: white;
-            border: none;
-            padding: 10px 15px;
+            padding: 10px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 0.9rem;
+            margin-bottom: 15px;
         }
-        button:hover { background-color: #0052a3; }
-        button.delete { background-color: #cc0000; padding: 5px 10px; font-size: 0.8rem; }
-        button.delete:hover { background-color: #a30000; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; font-size: 0.9rem; }
-        th { background-color: #fafafa; }
-        .status { font-size: 0.85rem; color: #666; margin-top: 5px; }
+        button.refresh:hover { background-color: #d0d0d0; }
+        ul { list-style: none; padding: 0; margin: 0; }
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+        a.download {
+            background-color: #0066cc;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+        a.download:hover { background-color: #0052a3; }
+        .info { font-size: 0.8rem; color: #666; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Veldboek Bestandsserver</h2>
-
-    <!-- Instellingen (GitHub Koppeling) -->
-    <div class="section">
-        <h3>1. GitHub Koppeling</h3>
-        <input type="text" id="repoOwner" placeholder="Jouw GitHub Gebruikersnaam">
-        <input type="text" id="repoName" placeholder="Repository Naam (bijv. veldboek-data)">
-        <input type="password" id="gitToken" placeholder="GitHub Personal Access Token (PAT)">
-        <button onclick="saveSettings()">Instellingen Opslaan</button>
-        <div id="settingsStatus" class="status"></div>
-    </div>
-
-    <!-- Bestand Uploaden -->
-    <div class="section">
-        <h3>2. Bestand Uploaden (vanaf telefoon/pc)</h3>
-        <input type="file" id="fileInput">
-        <button onclick="uploadFile()">Upload naar Veldboek</button>
-        <div id="uploadStatus" class="status"></div>
-    </div>
-
-    <!-- Bestanden Lijst -->
-    <div class="section">
-        <h3>3. Beschikbare Bestanden</h3>
-        <button onclick="loadFiles()">Lijst Verversen</button>
-        <table id="fileTable">
-            <thead>
-                <tr>
-                    <th>Bestandsnaam</th>
-                    <th>Acties</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="2">Nog niet geladen of geen instellingen.</td></tr>
-            </tbody>
-        </table>
-    </div>
+    <h2>Veldboek Download</h2>
+    <div class="info">Open deze pagina op je veldboek om direct je bestanden te downloaden.</div>
+    
+    <button class="refresh" onclick="loadFiles()">Lijst Verversen</button>
+    
+    <ul id="fileList">
+        <li>Laden...</li>
+    </ul>
 </div>
 
 <script>
-    // Laad opgeslagen instellingen bij openen
-    window.onload = function() {
-        if(localStorage.getItem('repoOwner')) document.getElementById('repoOwner').value = localStorage.getItem('repoOwner');
-        if(localStorage.getItem('repoName')) document.getElementById('repoName').value = localStorage.getItem('repoName');
-        if(localStorage.getItem('gitToken')) document.getElementById('gitToken').value = localStorage.getItem('gitToken');
-        if(localStorage.getItem('repoOwner') && localStorage.getItem('repoName')) {
-            loadFiles();
-        }
-    };
+    // PAS DIT EENMALIG AAN MET JOUW GEGEVENS:
+    const githubUser = "JOUW_GITHUB_GEBRUIKERSNAAM";
+    const repoName = "JOUW_REPO_NAAM";
 
-    function saveSettings() {
-        localStorage.setItem('repoOwner', document.getElementById('repoOwner').value.trim());
-        localStorage.setItem('repoName', document.getElementById('repoName').value.trim());
-        localStorage.setItem('gitToken', document.getElementById('gitToken').value.trim());
-        document.getElementById('settingsStatus').innerText = "Instellingen opgeslagen!";
-        loadFiles();
-    }
-
-    function getConfigs() {
-        return {
-            owner: localStorage.getItem('repoOwner'),
-            repo: localStorage.getItem('repoName'),
-            token: localStorage.getItem('gitToken')
-        };
-    }
-
-    // Laad alle bestanden in de root van de repo
     async function loadFiles() {
-        const cfg = getConfigs();
-        if(!cfg.owner || !cfg.repo) return;
-
-        const tableBody = document.querySelector("#fileTable tbody");
-        tableBody.innerHTML = `<tr><td colspan="2">Laden...</td></tr>`;
+        const listEl = document.getElementById('fileList');
+        listEl.innerHTML = "<li>Laden...</li>";
 
         try {
-            let response = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/files`, {
-                headers: cfg.token ? { "Authorization": `token ${cfg.token}` } : {}
-            });
+            // Haalt openbaar de inhoud van de map 'files' op (geen token nodig!)
+            let response = await fetch(`https://api.github.com/repos/${githubUser}/${repoName}/contents/files`);
             
             if(!response.ok) {
-                // Als de map 'files' nog niet bestaat, tonen we lege lijst
-                tableBody.innerHTML = `<tr><td colspan="2">Geen map 'files' gevonden of lege repo.</td></tr>`;
+                listEl.innerHTML = "<li>Geen map 'files' gevonden in de repo.</li>";
                 return;
             }
 
             let files = await response.json();
-            tableBody.innerHTML = "";
+            listEl.innerHTML = "";
 
             if(files.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="2">Geen bestanden aanwezig.</td></tr>`;
+                listEl.innerHTML = "<li>Geen bestanden aanwezig.</li>";
                 return;
             }
 
             files.forEach(file => {
-                let row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><a href="${file.download_url}" target="_blank">${file.name}</a></td>
-                    <td>
-                        <a href="${file.download_url}" download class="button-link" style="margin-right:5px; text-decoration:none; background:#eee; padding:4px 8px; border-radius:3px; color:#333;">Download</a>
-                        <button class="delete" onclick="deleteFile('${file.path}', '${file.sha}')">Verwijder</button>
-                    </td>
+                let li = document.createElement('li');
+                li.innerHTML = `
+                    <span style="word-break: break-all; margin-right: 10px;">${file.name}</span>
+                    <a href="${file.download_url}" class="download" download>Download</a>
                 `;
-                tableBody.appendChild(row);
+                listEl.appendChild(li);
             });
         } catch (err) {
-            tableBody.innerHTML = `<tr><td colspan="2">Fout bij laden: ${err.message}</td></tr>`;
+            listEl.innerHTML = "<li>Fout bij ophalen van bestanden.</li>";
         }
     }
 
-    // Bestand uploaden naar de map 'files/' in de repo
-    async function uploadFile() {
-        const cfg = getConfigs();
-        const fileInput = document.getElementById('fileInput');
-        const statusDiv = document.getElementById('uploadStatus');
-
-        if(!cfg.token) {
-            statusDiv.innerText = "Fout: GitHub Token ontbreekt in instellingen.";
-            return;
-        }
-        if(fileInput.files.length === 0) {
-            statusDiv.innerText = "Kies eerst een bestand.";
-            return;
-        }
-
-        let file = fileInput.files[0];
-        statusDiv.innerText = "Bezig met uploaden...";
-
-        let reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = async function () {
-            // Haal de base64 string op (verwijder de data URL meta prefix)
-            let base64Content = reader.result.split(',')[1];
-            let filePath = `files/${file.name}`;
-
-            try {
-                let response = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${filePath}`, {
-                    method: 'PUT',
-                    headers: {
-                        "Authorization": `token ${cfg.token}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        message: `Upload bestand via veldboek tool: ${file.name}`,
-                        content: base64Content
-                    })
-                });
-
-                if(response.ok) {
-                    statusDiv.innerText = "Upload gelukt!";
-                    fileInput.value = "";
-                    loadFiles();
-                } else {
-                    let errData = await response.json();
-                    statusDiv.innerText = "Fout bij upload: " + errData.message;
-                }
-            } catch (err) {
-                statusDiv.innerText = "Netwerkfout: " + errData.message;
-            }
-        };
-    }
-
-    // Bestand verwijderen
-    async function deleteFile(path, sha) {
-        const cfg = getConfigs();
-        if(!confirm("Weet je zeker dat je dit bestand wilt verwijderen?")) return;
-
-        try {
-            let response = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`, {
-                method: 'DELETE',
-                headers: {
-                    "Authorization": `token ${cfg.token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    message: `Verwijder bestand via veldboek tool: ${path}`,
-                    sha: sha
-                })
-            });
-
-            if(response.ok) {
-                loadFiles();
-            } else {
-                alert("Verwijderen mislukt.");
-            }
-        } catch (err) {
-            alert("Fout bij verwijderen.");
-        }
-    }
+    // Direct laden bij openen van de pagina
+    loadFiles();
 </script>
 
 </body>
