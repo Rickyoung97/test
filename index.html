@@ -1,123 +1,605 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Veldboek Bestanden</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
-            padding: 20px;
-            margin: 0;
-        }
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h2 { margin-top: 0; font-size: 1.2rem; border-bottom: 2px solid #eee; padding-bottom: 8px; }
-        button.refresh {
-            width: 100%;
-            background-color: #e0e0e0;
-            color: #333;
-            border: 1px solid #ccc;
-            padding: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-        }
-        button.refresh:hover { background-color: #d0d0d0; }
-        ul { list-style: none; padding: 0; margin: 0; }
-        li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-            font-size: 0.9rem;
-        }
-        a.download {
-            background-color: #0066cc;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 0.85rem;
-        }
-        a.download:hover { background-color: #0052a3; }
-        .info { font-size: 0.8rem; color: #666; margin-bottom: 15px; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f302c">
+<title>Energietracker & Dopamine App v8.2</title>
+<style>
+:root{--bg:#f4f5f0;--surface:#fff;--ink:#1f302c;--muted:#697873;--line:#e2e7df;--green:#2e8b69;--green-soft:#e3f4eb;--amber:#c98325;--amber-soft:#fff1d9;--red:#c74e4e;--red-soft:#fde9e6;--navy:#263e39;--purple:#6b4c9a;--purple-soft:#f0eaec;--shadow:0 8px 28px rgba(33,57,48,.06);--radius:20px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #8fc9ae;outline-offset:2px}.app-header{background:rgba(255,255,255,.92);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;backdrop-filter:blur(12px)}.header-inner{max-width:1180px;margin:auto;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand-mark{width:42px;height:42px;background:var(--navy);color:#fff;border-radius:14px;display:grid;place-items:center;font-size:21px;flex:none}.brand h1{font-size:19px;line-height:1.15;margin:0;letter-spacing:-.5px}.brand p{margin:4px 0 0;color:var(--muted);font-size:12px}.header-actions{display:flex;align-items:center;gap:10px}.date-wrap{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}.date-wrap input{width:144px}.shell{max-width:1180px;margin:0 auto;padding:24px 22px 50px}.nav{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:24px;overflow-x:auto}.nav-btn{border:0;background:transparent;color:var(--muted);padding:12px 17px 13px;white-space:nowrap;border-bottom:3px solid transparent;font-weight:650}.nav-btn.active{color:var(--navy);border-color:var(--green)}.view{display:none}.view.active{display:block}.view-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin:0 0 22px}.eyebrow{text-transform:uppercase;letter-spacing:1.3px;font-size:10px;font-weight:800;color:var(--green);margin:0 0 6px}.view-heading h2{font-size:clamp(24px,3vw,33px);letter-spacing:-1px;line-height:1.15;margin:0}.view-heading p{color:var(--muted);margin:8px 0 0;max-width:650px}.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:750;white-space:nowrap;background:#edf1ed;color:#50635a}.pill.green{background:var(--green-soft);color:#246d50}.pill.amber{background:var(--amber-soft);color:#935b0d}.pill.red{background:var(--red-soft);color:#a33c36}.pill.purple{background:var(--purple-soft);color:var(--purple)}.grid{display:grid;gap:16px}.dashboard-grid{grid-template-columns:minmax(0,1.4fr) minmax(290px,.85fr);align-items:stretch}.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:21px;box-shadow:var(--shadow);min-width:0}.card h3{font-size:16px;margin:0 0 5px;letter-spacing:-.25px}.card-sub{color:var(--muted);font-size:13px;margin:0 0 17px}.battery-card{background:var(--navy);color:white;border:0;position:relative;overflow:hidden;padding:24px}.battery-card:after{content:"";position:absolute;width:230px;height:230px;border:1px solid rgba(255,255,255,.08);border-radius:50%;right:-90px;top:-85px;pointer-events:none}.battery-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;position:relative;z-index:1}.battery-card .eyebrow{color:#aadfc7}.battery-card .card-sub{color:#c5d5ce;margin-bottom:12px}.status-pill{background:rgba(255,255,255,.12);color:#fff}.battery-shell{height:150px;max-width:520px;margin:14px auto 10px;position:relative;border:6px solid rgba(255,255,255,.88);border-radius:20px;padding:8px;z-index:1}.battery-shell:after{content:"";position:absolute;right:-18px;top:42%;height:36px;width:12px;background:rgba(255,255,255,.88);border-radius:0 5px 5px 0}.battery-track{position:relative;width:100%;height:100%;border-radius:99px;overflow:hidden;background:rgba(255,255,255,.13)}.battery-fill{height:100%;width:60%;border-radius:6px;background:linear-gradient(90deg,#3fbe87,#89dfa9);transition:width .4s ease,background .4s ease}.battery-fill.amber{background:linear-gradient(90deg,#dc9c37,#f3c96b)}.battery-fill.red{background:linear-gradient(90deg,#cf5550,#ef8a7c)}.battery-number{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-shadow:0 2px 6px rgba(14,33,27,.25)}.battery-number strong{font-size:clamp(40px,5vw,58px);line-height:1;font-weight:800;letter-spacing:-3px}.battery-number span{font-size:12px;color:rgba(255,255,255,.9);margin-top:4px;letter-spacing:.3px}.battery-scale{display:flex;justify-content:space-between;color:#c5d5ce;font-size:11px;margin:9px 3px 0}.battery-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.15);position:relative;z-index:1}.battery-foot span{font-size:12px;color:#d2dfd9}.text-button{border:0;background:transparent;color:inherit;text-decoration:underline;text-underline-offset:3px;font-weight:650;padding:4px}.stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}.stat{padding:13px 12px;border:1px solid var(--line);border-radius:15px;background:#fafbf8}.stat .label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}.stat strong{font-size:20px;letter-spacing:-.5px;display:block;line-height:1.15}.stat small{font-size:10px;color:var(--muted)}.insight-stack{display:flex;flex-direction:column;gap:14px}.insight{display:flex;gap:12px;align-items:flex-start}.insight-icon{width:37px;height:37px;flex:none;border-radius:12px;background:#edf5ef;color:var(--green);display:grid;place-items:center;font-size:18px}.insight p{font-size:13px;color:var(--muted);margin:4px 0 0}.insight strong{font-size:14px;display:block}.soft-line{height:1px;background:var(--line);margin:16px 0}.metric-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;margin:8px 0}.metric-row span{color:var(--muted)}.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:20px 0 12px}.section-title h3{margin:0;font-size:17px;letter-spacing:-.3px}.section-title p{margin:3px 0 0;color:var(--muted);font-size:12px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:12px;padding:11px 15px;font-weight:750;font-size:13px;transition:transform .12s ease,background .12s ease}.btn:active{transform:scale(.98)}.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:#1a312b}.btn-soft{background:#edf4ef;color:#285e48;border-color:#d8e9dd}.btn-outline{background:white;border-color:var(--line);color:var(--ink)}.btn-danger{background:var(--red-soft);color:#a33c36;border-color:#f2c9c4}.btn-small{padding:7px 10px;font-size:12px;border-radius:99px}.btn-block{width:100%}.button-row{display:flex;gap:9px;flex-wrap:wrap}.input-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.input-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.field{min-width:0}.field label,.field-label{display:block;font-size:12px;font-weight:750;color:#354740;margin-bottom:6px}.field input,.field select,.field textarea,.date-wrap input{width:100%;background:#fff;color:var(--ink);border:1px solid #d9e1d9;border-radius:11px;padding:10px 11px;min-height:43px}.field textarea{min-height:86px;resize:vertical}.form-card{margin-bottom:14px}.form-card-head{display:flex;align-items:flex-start;gap:11px;margin-bottom:17px}.form-icon{display:grid;place-items:center;width:39px;height:39px;border-radius:13px;background:#eaf4ed;color:#31785a;font-size:18px;flex:none}.form-card-head h3{margin:1px 0 3px;font-size:16px}.form-card-head p{margin:0;color:var(--muted);font-size:12px}.form-bottom{display:flex;align-items:center;justify-content:space-between;gap:15px;position:sticky;bottom:10px;background:rgba(244,245,240,.92);padding:10px;border-radius:15px;backdrop-filter:blur(10px);border:1px solid var(--line);margin-top:18px}.save-status{font-size:12px;color:var(--muted)}.history-list{display:flex;flex-direction:column;gap:10px}.history-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;border:1px solid var(--line);border-radius:15px;padding:15px 17px;background:white}.settings-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}.footer{text-align:center;font-size:11px;color:#819087;padding:20px 0 0}.toast{position:fixed;right:18px;bottom:18px;z-index:50;padding:12px 16px;background:var(--navy);color:#fff;border-radius:12px;box-shadow:var(--shadow);font-size:13px;max-width:min(360px,calc(100vw - 36px));opacity:0;transform:translateY(8px);pointer-events:none;transition:.18s}.toast.show{opacity:1;transform:translateY(0)}.small-muted{font-size:11px;color:var(--muted)}
+.toggle-group{display:inline-flex;background:#edf1ed;border-radius:12px;padding:3px;gap:2px}.toggle-btn{border:0;background:transparent;padding:7px 14px;border-radius:99px;font-size:12px;font-weight:750;color:var(--muted);transition:all .15s ease}.toggle-btn.active{background:#fff;color:var(--navy);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.event-quick-log{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:12px}
+.event-chip{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 11px;text-align:left;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:650;transition:transform .1s ease,border-color .1s ease}.event-chip:hover{border-color:var(--green);transform:translateY(-1px)}
+.event-timeline{display:flex;flex-direction:column;gap:8px;margin-top:14px;max-height:400px;overflow-y:auto;padding-right:4px}
+.event-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fafbf8;font-size:13px}
+.event-item .ev-time{font-weight:750;font-variant-numeric:tabular-nums;width:50px;color:var(--navy)}
+.event-item .ev-title{flex:1;font-weight:600}
+.event-item .ev-d{font-weight:800;padding:3px 8px;border-radius:8px;font-size:12px}
+.event-item .ev-d.plus{background:var(--green-soft);color:#246d50}
+.event-item .ev-d.minus{background:var(--red-soft);color:#a33c36}
+.event-item .ev-delete{border:0;background:transparent;color:#a33c36;font-size:16px;cursor:pointer;padding:2px 6px}
+.moment-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fafbf8}.moment-item .moment-time{font-weight:750;font-variant-numeric:tabular-nums;width:48px}.moment-item .moment-score{font-size:18px;font-weight:850;min-width:47px}.moment-item .moment-note{flex:1;color:var(--muted);font-size:12px;overflow-wrap:anywhere}.moment-item .moment-delete{border:1px solid var(--line);border-radius:8px;background:#fff;padding:5px 8px;color:#8c4a43}
+.chart-controls{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}.chart-period-btn[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chart-wrap{width:100%;overflow-x:auto;overflow-y:hidden;border:1px solid var(--line);background:#fff;border-radius:15px;padding:8px}.energy-chart{display:block;width:100%;height:auto;min-height:260px}
+.step10-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.step10-question{border:1px solid #e3e9e0;border-radius:13px;background:#fff;padding:12px;min-width:0}
+.step10-question label{display:flex;gap:8px;align-items:flex-start;font-weight:750;font-size:12px;color:#30453c;margin-bottom:7px}
+.step10-number{display:grid;place-items:center;flex:none;width:23px;height:23px;border-radius:8px;background:#eef4ee;color:#317455;font-size:11px}
+.step10-question textarea{width:100%;min-height:72px;border:1px solid #d9e1d9;border-radius:9px;padding:9px 10px;resize:vertical;color:var(--ink);background:#fff;font:inherit;font-size:13px;line-height:1.45}
+@media(max-width:800px){.dashboard-grid,.settings-layout{grid-template-columns:1fr}.step10-grid{grid-template-columns:1fr}.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
 </head>
 <body>
+<header class="app-header"><div class="header-inner"><div class="brand"><div class="brand-mark" aria-hidden="true">⚡</div><div><h1>Energietracker & Dopamine</h1><p>Batterij (%) & Reële Dopamine Curve (d)</p></div></div><div class="header-actions"><label class="date-wrap"><span>Dag bekijken</span><input id="selectedDate" type="date" aria-label="Dag bekijken"></label></div></div></header>
+<main class="shell">
+<nav class="nav" aria-label="Hoofdnavigatie">
+  <button class="nav-btn active" id="tab-dashboard" type="button">◉ Overzicht</button>
+  <button class="nav-btn" id="tab-dopamine" type="button">⚡ Dopamine Tracker (d)</button>
+  <button class="nav-btn" id="tab-entry" type="button">＋ Dag Invoeren & Step 10</button>
+  <button class="nav-btn" id="tab-history" type="button">▤ Historie</button>
+  <button class="nav-btn" id="tab-settings" type="button">⚙ Instellingen</button>
+</nav>
 
-<div class="container">
-    <h2>Veldboek Download</h2>
-    <div class="info">Open deze pagina op je veldboek om direct je bestanden te downloaden.</div>
-    
-    <button class="refresh" onclick="loadFiles()">Lijst Verversen</button>
-    
-    <ul id="fileList">
-        <li>Laden...</li>
-    </ul>
-</div>
+<!-- VIEW: DASHBOARD -->
+<section id="view-dashboard" class="view active">
+ <div class="view-heading"><div><p class="eyebrow">JOUW LIVE DASHBOARD</p><h2>Energie & Dopamine Status</h2><p>Real-time inzicht in je batterij-index en actuele dopamine-curve met crash verloop.</p></div></div>
+ 
+ <div class="grid dashboard-grid">
+  <div>
+   <article class="card battery-card"><div class="battery-top"><div><p class="eyebrow">PERSOONLIJKE ENERGIE-INDEX</p><h3 style="font-size:18px;margin:0 0 4px">Jouw Energiereserve</h3><p class="card-sub" id="battery-caption">Berekend op basis van slaap, belasting, herstel en gevoelsmetingen.</p></div><span id="battery-status" class="pill status-pill">● Veilige zone</span></div><div class="battery-shell" role="img"><div class="battery-track"><div id="battery-fill" class="battery-fill"></div><div class="battery-number"><strong id="battery-value">64%</strong><span>GESCHATTE BATTERIJ</span></div></div></div><div class="battery-scale"><span>0 · kritiek</span><span>25 · opletten</span><span>60 · ruimte</span><span>100</span></div><div class="battery-foot"><span id="battery-footnote">Berekend + Gevoelslog</span><button class="text-button" id="go-entry" type="button">Dag aanvullen ↗</button></div></article>
+
+   <!-- Live Feeling Battery Log Card -->
+   <article class="card moment-card" style="margin-top:14px"><div class="section-title" style="margin:0 0 8px"><div><h3>Hoe voelt je batterij nú?</h3><p>Log direct je gevoelsmatige batterij (0-100%).</p></div></div><form id="moment-form" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input id="moment-time" type="time" style="width:110px" required><input id="moment-level" type="number" min="0" max="100" step="1" placeholder="Batterij %" style="width:110px" required><input id="moment-note" type="text" maxlength="100" placeholder="Korte notitie..." style="flex:1;min-width:140px"><button class="btn btn-primary" type="submit">＋ Log Gevoel</button></form><div id="moment-log-list" style="margin-top:10px"></div></article>
+
+   <div class="stat-grid"><div class="stat"><span class="label">Laatste Gevoel</span><strong id="self-battery">—</strong><small>van 100%</small></div><div class="stat"><span class="label">Dopamine Baseline</span><strong id="d-baseline-display">0d</strong><small>normaal = 0d</small></div><div class="stat"><span class="label">Actuele Dopamine</span><strong id="d-current-display">0d</strong><small>met upper/downer</small></div><div class="stat"><span class="label">Gem. 14 Dagen</span><strong id="trend-average">—</strong><small>energietrend</small></div></div>
+
+   <!-- Homepage Chart Toggle Card -->
+   <article class="card dashboard-chart" style="margin-top:16px"><div class="section-title" style="margin:0 0 10px"><div><h3>Grafiek Overzicht</h3><p>Schakel tussen je Batterij (%) en Dopamine Curve (Upper & Downer).</p></div>
+   <div class="toggle-group"><button type="button" class="toggle-btn active" id="dash-chart-mode-bat">Batterij (%)</button><button type="button" class="toggle-btn" id="dash-chart-mode-dop">Dopamine (d)</button></div></div>
+   
+   <div class="chart-controls" role="group"><button type="button" class="btn btn-outline chart-period-btn" data-dash-period="12h">12u</button><button type="button" class="btn btn-outline chart-period-btn" data-dash-period="1d" aria-pressed="true">1D</button><button type="button" class="btn btn-outline chart-period-btn" data-dash-period="1w">1W</button><button type="button" class="btn btn-outline chart-period-btn" data-dash-period="1m">1M</button></div>
+
+   <div class="chart-wrap"><svg id="dashboard-main-chart" class="energy-chart" viewBox="0 0 900 280"></svg></div>
+   <p id="dashboard-chart-summary" class="chart-summary" style="margin-top:8px;font-size:12px;color:var(--muted)"></p></article>
+  </div>
+
+  <div class="insight-stack">
+   <article class="card"><h3>Dopamine Balans & Baseline</h3><p class="card-sub">Jouw actuele dopamine-niveau met crash verloop.</p><div class="insight"><div class="insight-icon" style="background:var(--purple-soft);color:var(--purple)">⚡</div><div><strong id="d-status-title">Baseline rond 0d</strong><p id="d-status-text">Je dopamine baseline is stabiel. Blijf kiezen voor gezonde prikkels en voldoende slaap.</p></div></div><div class="soft-line"></div><div class="metric-row"><span>Slaapkwaliteit invloed</span><strong id="sleep-d-impact">0d</strong></div></article>
+
+   <article class="card"><h3>Snelle Real-Time Invoer</h3><p class="card-sub">Log direct een activiteit op de D-schaal.</p>
+   <div class="event-quick-log">
+    <button type="button" class="event-chip" data-quick="porn"><span class="icon">⚠️</span> Porno (+40d ➔ -25d crash)</button>
+    <button type="button" class="event-chip" data-quick="coffee"><span class="icon">☕</span> Koffie (+6d ➔ -3d crash)</button>
+    <button type="button" class="event-chip" data-quick="sport"><span class="icon">🏃</span> Sporten (+12d, +2d base)</button>
+    <button type="button" class="event-chip" data-quick="cold_shower"><span class="icon">❄️</span> Koude douche (+10d)</button>
+    <button type="button" class="event-chip" data-quick="walk"><span class="icon">🌲</span> Wandeling (+5d)</button>
+    <button type="button" class="event-chip" data-quick="couch"><span class="icon">🛋️</span> Bank hangen (+5d ➔ -4d)</button>
+    <button type="button" class="event-chip" data-quick="bible"><span class="icon">📖</span> Bijbellezen (+6d)</button>
+    <button type="button" class="event-chip" data-quick="pray"><span class="icon">🙏</span> Bidden (+5d)</button>
+   </div>
+   <button type="button" class="btn btn-outline btn-block" style="margin-top:12px" id="go-dopamine-view">Naar uitgebreide Dopamine Tracker →</button></article>
+  </div>
+ </div>
+</section>
+
+<!-- VIEW: DOPAMINE TRACKER -->
+<section id="view-dopamine" class="view">
+ <div class="view-heading"><div><p class="eyebrow">DOPAMINE D-SCHAAL (d)</p><h2>Real-Time Dopamine Tracker</h2><p>Zie direct de upper (piek) én de daadwerkelijke downer (crash) op basis van de activiteit en tijdstip!</p></div></div>
+
+ <div class="grid dashboard-grid">
+  <div>
+   <article class="card form-card"><div class="form-card-head"><span class="form-icon" style="background:var(--purple-soft);color:var(--purple)">⚡</span><div><h3>Gebeurtenis / Inname Loggen</h3><p>Real-time of met terugwerkende kracht.</p></div></div>
+   <form id="dopamine-event-form"><div class="input-grid three"><div class="field"><label for="ev-date">Datum</label><input id="ev-date" type="date" required></div><div class="field"><label for="ev-time">Tijdstip</label><input id="ev-time" type="time" required></div><div class="field"><label for="ev-type">Type Activiteit / Inname</label><select id="ev-type" required>
+    <optgroup label="Kunstmatige Prikkels (Piek -> Downer/Crash)">
+     <option value="porn">Porno / Edgen (+40d piek ➔ -25d crash over 48u)</option>
+     <option value="cocaine">Cocaïne / Harddrugs (+70d piek ➔ -45d crash over 5d)</option>
+     <option value="weed">Wiet / Cannabis (+15d piek ➔ -8d crash over 36u)</option>
+     <option value="alcohol">Alcohol consumptie (+15d piek ➔ -8d crash over 24u)</option>
+     <option value="smoking">Roken / Nicotine (+8d piek ➔ -5d crash over 4u)</option>
+     <option value="nicotine_gum">Nicotinekauwgom (+6d piek ➔ -3d crash over 3u)</option>
+     <option value="coffee">Koffie / Cafeïne (+6d piek ➔ -3d crash over 4u)</option>
+     <option value="sugar_meal">Gesuikerde / Vette maaltijd (+12d piek ➔ -6d crash over 3u)</option>
+     <option value="gaming">Gaming / Schermtijd (+18d piek ➔ -10d crash over 6u)</option>
+     <option value="social_media">Doomscrolling (+8d piek ➔ -4d crash over 2u)</option>
+     <option value="couch">Bank hangen / Passief (+5d piek ➔ -4d crash over 4u)</option>
+    </optgroup>
+    <optgroup label="Gezonde Prikkels (Direct + Geen crash)">
+     <option value="sport">Sporten / Workout (+12d upper, +2d duurzame baseline!)</option>
+     <option value="cold_shower">Koude douche (+10d upper, +1d baseline)</option>
+     <option value="healthy_meal">Gezonde maaltijd (+5d upper, 0d crash)</option>
+     <option value="walk">Wandeling buiten (+5d upper, +1d baseline)</option>
+     <option value="bible">Bijbellezen (+6d upper, +0.5d baseline)</option>
+     <option value="pray">Bidden (+5d upper, +0.5d baseline)</option>
+     <option value="music">Muziek maken (+8d upper, +0.8d baseline)</option>
+    </optgroup>
+   </select></div></div>
+
+   <div class="input-grid three" style="margin-top:12px"><div class="field"><label for="ev-amount">Hoeveelheid</label><select id="ev-amount"><option value="small">Klein / 1 eenheid</option><option value="medium" selected>Gemiddeld / Normaal</option><option value="large">Groot / Veel / Intensief</option></select></div><div class="field"><label for="ev-duration">Duur (minuten)</label><input id="ev-duration" type="number" min="0" max="600" step="5" placeholder="Bijv. 30"></div><div class="field"><label for="ev-note">Notitie</label><input id="ev-note" type="text" maxlength="100" placeholder="Bijv. na het werk..."></div></div>
+
+   <div class="button-row" style="margin-top:14px"><button class="btn btn-primary" type="submit">⚡ Event Loggen op Tijdstip</button></div></form></article>
+
+   <article class="card"><div class="section-title" style="margin:0 0 10px"><div><h3>Gelogde Events Vandaag</h3></div></div><div id="dopamine-events-list" class="event-timeline"></div></article>
+  </div>
+
+  <div>
+   <article class="card"><h3>Hoe Upper & Downer Werken</h3><div class="insight-stack" style="gap:10px;font-size:13px"><p>• <strong>Piek (Upper):</strong> Porno (+40d) of cafeïne (+6d) geeft direct dopamine in je systeem.</p><p>• <strong>Downer (Crash):</strong> Direct na de piek daalt je dopamine <em>onder</em> je neutrale baseline. Porno veroorzaakt een langdurige dip van <strong>-25d</strong> gedurende uren/dagen.</p><p>• <strong>Duurzaam herstel:</strong> Discipline (sporten, koud douchen) verhoogt je permanente baseline zonder crash achteraf.</p></div></article>
+  </div>
+ </div>
+</section>
+
+<!-- VIEW: ENTRY & STEP 10 -->
+<section id="view-entry" class="view">
+ <div class="view-heading"><div><p class="eyebrow">DAGELIJKSE CHECK-IN & REFLECTIE</p><h2>Dag Invoeren & Step 10</h2><p>Vul je daggegevens in voor nauwkeurige batterij- en dopamineberekeningen.</p></div></div>
+ <form id="entry-form" autocomplete="off">
+  <article class="card form-card"><div class="form-card-head"><span class="form-icon">◷</span><div><h3>Slaap & Werktijden</h3></div></div><div class="input-grid three"><div class="field"><label for="bedtime">Bedtijd</label><input class="tracker-input" data-field="bedtime" id="bedtime" type="time"></div><div class="field"><label for="waketime">Opstatijd</label><input class="tracker-input" data-field="waketime" id="waketime" type="time"></div><div class="field"><label for="sleepQuality">Slaapkwaliteit</label><select class="tracker-input" data-field="sleepQuality" id="sleepQuality"><option value="">Niet ingevuld</option><option value="good">Goed / Uitgerust (+D herstel)</option><option value="poor">Slecht / Onrustig (-D crash)</option></select></div><div class="field"><label for="workStart">Werk Starttijd</label><input class="tracker-input" data-field="workStart" id="workStart" type="time"></div><div class="field"><label for="workEnd">Werk Eindtijd</label><input class="tracker-input" data-field="workEnd" id="workEnd" type="time"></div><div class="field"><label for="workHours">Netto Werren (uur)</label><input class="tracker-input" data-field="workHours" id="workHours" type="number" min="0" max="24" step="0.5" placeholder="8"></div></div></article>
+
+  <article class="card form-card"><div class="form-card-head"><span class="form-icon">☕</span><div><h3>Voeding, Middelen & Gewoontes</h3></div></div><div class="input-grid three"><div class="field"><label for="mealType">Maaltijd Type</label><select class="tracker-input" data-field="mealType" id="mealType"><option value="">Niet ingevuld</option><option value="healthy">Gezond / Balans</option><option value="sugary">Gesuikerd / Vrij vet</option></select></div><div class="field"><label for="mealPortion">Portiegrootte</label><select class="tracker-input" data-field="mealPortion" id="mealPortion"><option value="">Niet ingevuld</option><option value="small">Klein</option><option value="medium">Gemiddeld</option><option value="large">Groot / Veel</option></select></div><div class="field"><label for="coffeeCount">Koppen koffie</label><input class="tracker-input" data-field="coffeeCount" id="coffeeCount" type="number" min="0" max="20" placeholder="0"></div><div class="field"><label for="smokingCount">Roken (sigaretten/vape)</label><select class="tracker-input" data-field="smokingCount" id="smokingCount"><option value="">Niet ingevuld</option><option value="none">Niet gerookt</option><option value="few">Wenig (1-3)</option><option value="many">Veel (4+)</option></select></div><div class="field"><label for="nicotineGum">Nicotinekauwgom</label><select class="tracker-input" data-field="nicotineGum" id="nicotineGum"><option value="">Niet ingevuld</option><option value="none">Niet gebruikt</option><option value="few">1-2 stuks</option><option value="many">3+ stuks</option></select></div><div class="field"><label for="alcoholCount">Alcohol gedronken</label><select class="tracker-input" data-field="alcoholCount" id="alcoholCount"><option value="">Niet ingevuld</option><option value="none">Geen</option><option value="few">1-2 glazen</option><option value="many">3+ glazen</option></select></div></div></article>
+
+  <article class="card form-card"><div class="form-card-head"><span class="form-icon">♡</span><div><h3>Geestelijk & Fysiek Herstel</h3></div></div><div class="input-grid three"><div class="field"><label for="bibleMins">Bijbellezen (minuten)</label><input class="tracker-input" data-field="bibleMins" id="bibleMins" type="number" min="0" max="240" placeholder="0"></div><div class="field"><label for="prayerMins">Bidden (minuten)</label><input class="tracker-input" data-field="prayerMins" id="prayerMins" type="number" min="0" max="240" placeholder="0"></div><div class="field"><label for="showerType">Douche Type</label><select class="tracker-input" data-field="showerType" id="showerType"><option value="">Niet ingevuld</option><option value="warm">Warme douche</option><option value="cold">Koude douche (+D boost)</option></select></div><div class="field"><label for="exerciseMins">Sportduur (minuten)</label><input class="tracker-input" data-field="exerciseMins" id="exerciseMins" type="number" min="0" max="300" placeholder="0"></div><div class="field"><label for="couchMins">Bank hangen / Passief (min)</label><input class="tracker-input" data-field="couchMins" id="couchMins" type="number" min="0" max="600" placeholder="0"></div><div class="field"><label for="selfBattery">Mijn Gevoelsbatterij (0-100%)</label><input class="tracker-input" data-field="selfBattery" id="selfBattery" type="number" min="0" max="100" placeholder="0-100"></div></div></article>
+
+  <article class="card form-card"><div class="form-card-head"><span class="form-icon">✎</span><div><h3>Step 10 · Dagreflectie</h3></div></div>
+  <div class="step10-grid">
+   <div class="step10-question"><label><span class="step10-number">1</span> Waar zat ik vandaag fout?</label><textarea class="tracker-input" data-field="step10Fault" id="step10Fault"></textarea></div>
+   <div class="step10-question"><label><span class="step10-number">2</span> Heb ik iemand gekwetst?</label><textarea class="tracker-input" data-field="step10Hurt" id="step10Hurt"></textarea></div>
+   <div class="step10-question"><label><span class="step10-number">3</span> Was ik eerlijk naar mezelf en anderen?</label><textarea class="tracker-input" data-field="step10Honesty" id="step10Honesty"></textarea></div>
+   <div class="step10-question"><label><span class="step10-number">4</span> Waar liet ik me leiden door ego/angst/boosheid?</label><textarea class="tracker-input" data-field="step10EgoFearAnger" id="step10EgoFearAnger"></textarea></div>
+   <div class="step10-question"><label><span class="step10-number">5</span> Heb ik iets goed te maken?</label><textarea class="tracker-input" data-field="step10Amends" id="step10Amends"></textarea></div>
+   <div class="step10-question"><label><span class="step10-number">6</span> Wat ging er juist wel goed?</label><textarea class="tracker-input" data-field="step10Good" id="step10Good"></textarea></div>
+   <div class="step10-question"><label><span class="step10-number">7</span> Heb ik mijn grenzen bewaakt?</label><textarea class="tracker-input" data-field="step10Boundaries" id="step10Boundaries"></textarea></div>
+   <div class="step10-question"><label><span class="step10-number">8</span> Wat deed ik voor mijn herstel?</label><textarea class="tracker-input" data-field="step10Recovery" id="step10Recovery"></textarea></div>
+   <div class="step10-question"><label><span class="step10-number">9</span> Waar ben ik dankbaar voor?</label><textarea class="tracker-input" data-field="step10Gratitude" id="step10Gratitude" style="grid-column:1/-1"></textarea></div>
+  </div></article>
+
+  <div class="form-bottom"><span class="save-status" id="save-status">Lokaal opgeslagen.</span><div class="button-row"><button class="btn btn-primary" type="submit">✓ Dag Opslaan</button></div></div>
+ </form>
+</section>
+
+<!-- VIEW: HISTORY -->
+<section id="view-history" class="view">
+ <div class="view-heading"><div><p class="eyebrow">HISTORIE</p><h2>Opgeslagen Dagen</h2></div></div>
+ <div class="history-list" id="history-list"></div>
+</section>
+
+<!-- VIEW: SETTINGS -->
+<section id="view-settings" class="view">
+ <div class="view-heading"><div><p class="eyebrow">INSTELLINGEN & BACKUP</p><h2>Data Beheer</h2></div></div>
+ <div class="settings-layout">
+  <article class="card form-card"><h3>Back-up & Herstel</h3><div class="settings-actions" style="margin-top:14px"><button type="button" class="btn btn-primary btn-block" id="export-json">⬇ Exporteer JSON-backup</button><label class="btn btn-outline btn-block file-label" style="display:flex;align-items:center;justify-content:center;padding:10px">⬆ Importeer JSON-backup<input id="import-json" type="file" accept=".json,application/json" style="display:none"></label><button type="button" class="btn btn-danger btn-block" id="delete-all" style="margin-top:14px">Wis alle lokale gegevens</button></div></article>
+ </div>
+</section>
+
+<div class="footer">Energietracker & Dopamine App · Alle data blijft 100% lokaal op jouw apparaat.</div>
+</main>
+<div id="toast" class="toast" role="status"></div>
 
 <script>
-    // Jouw gegevens zijn hier ingevuld:
-    const githubUser = "Rickyoung1997";
-    const repoName = "test";
+(function(){
+ 'use strict';
+ const STORAGE_KEY='energietracker_app_v2';
+ const $=id=>document.getElementById(id);
+ const clone=obj=>JSON.parse(JSON.stringify(obj));
+ const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 
-    async function loadFiles() {
-        const listEl = document.getElementById('fileList');
-        listEl.innerHTML = "<li>Laden...</li>";
+ const EVENT_DEFS = {
+  porn: { label: 'Porno / Edgen', upper: 40, crash: -25, peakDuration: 45, crashDuration: 180, baselineShift: -1.5, type: 'bad' },
+  cocaine: { label: 'Cocaïne / Harddrugs', upper: 70, crash: -45, peakDuration: 60, crashDuration: 300, baselineShift: -4.0, type: 'bad' },
+  weed: { label: 'Wiet / Cannabis', upper: 15, crash: -8, peakDuration: 90, crashDuration: 180, baselineShift: -0.8, type: 'bad' },
+  alcohol: { label: 'Alcohol', upper: 15, crash: -8, peakDuration: 60, crashDuration: 240, baselineShift: -0.5, type: 'bad' },
+  smoking: { label: 'Roken / Nicotine', upper: 8, crash: -5, peakDuration: 15, crashDuration: 90, baselineShift: -0.3, type: 'bad' },
+  nicotine_gum: { label: 'Nicotinekauwgom', upper: 6, crash: -3, peakDuration: 20, crashDuration: 60, baselineShift: -0.1, type: 'bad' },
+  coffee: { label: 'Koffie / Cafeïne', upper: 6, crash: -3, peakDuration: 45, crashDuration: 120, baselineShift: 0, type: 'bad' },
+  sugar_meal: { label: 'Gesuikerde Maaltijd', upper: 12, crash: -6, peakDuration: 30, crashDuration: 90, baselineShift: -0.2, type: 'bad' },
+  gaming: { label: 'Gaming / Schermtijd', upper: 18, crash: -10, peakDuration: 60, crashDuration: 180, baselineShift: -0.5, type: 'bad' },
+  social_media: { label: 'Doomscrolling', upper: 8, crash: -4, peakDuration: 20, crashDuration: 60, baselineShift: -0.3, type: 'bad' },
+  couch: { label: 'Bank Hangen', upper: 5, crash: -4, peakDuration: 30, crashDuration: 90, baselineShift: -0.2, type: 'bad' },
+  
+  sport: { label: 'Sporten / Workout', upper: 12, crash: 0, peakDuration: 120, crashDuration: 0, baselineShift: 2.0, type: 'good' },
+  cold_shower: { label: 'Koude Douche', upper: 10, crash: 0, peakDuration: 90, crashDuration: 0, baselineShift: 1.0, type: 'good' },
+  healthy_meal: { label: 'Gezonde Maaltijd', upper: 5, crash: 0, peakDuration: 60, crashDuration: 0, baselineShift: 0.2, type: 'good' },
+  walk: { label: 'Wandeling', upper: 5, crash: 0, peakDuration: 90, crashDuration: 0, baselineShift: 0.8, type: 'good' },
+  bible: { label: 'Bijbellezen', upper: 6, crash: 0, peakDuration: 120, crashDuration: 0, baselineShift: 0.5, type: 'good' },
+  pray: { label: 'Bidden', upper: 5, crash: 0, peakDuration: 90, crashDuration: 0, baselineShift: 0.5, type: 'good' },
+  music: { label: 'Muziek Maken', upper: 8, crash: 0, peakDuration: 120, crashDuration: 0, baselineShift: 0.8, type: 'good' }
+ };
 
-        try {
-            let response = await fetch(`https://api.github.com/repos/${githubUser}/${repoName}/contents/files`);
-            
-            if(!response.ok) {
-                listEl.innerHTML = "<li>Geen map 'files' gevonden in de repo.</li>";
-                return;
-            }
+ const emptyEntry=date=>({
+  date, bedtime:'', waketime:'', sleepQuality:'', workStart:'', workEnd:'', workHours:'',
+  mealType:'', mealPortion:'', coffeeCount:'', smokingCount:'', nicotineGum:'', alcoholCount:'',
+  bibleMins:'', prayerMins:'', showerType:'', exerciseMins:'', couchMins:'', selfBattery:'',
+  batteryCheckins:[], dopamineEvents:[],
+  step10Fault:'', step10Hurt:'', step10Honesty:'', step10EgoFearAnger:'', step10Amends:'', step10Good:'', step10Boundaries:'', step10Recovery:'', step10Gratitude:''
+ });
 
-            let files = await response.json();
-            listEl.innerHTML = "";
+ function freshDB(){return {schemaVersion:2,entries:{}}}
+ function loadDB(){try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return freshDB();const obj=JSON.parse(raw);return obj.entries?obj:freshDB()}catch(e){return freshDB()}}
 
-            if(files.length === 0) {
-                listEl.innerHTML = "<li>Geen bestanden aanwezig.</li>";
-                return;
-            }
+ let db=loadDB(); let selectedDate=today(); let draft=getEntry(selectedDate);
+ let activeView='dashboard'; let dashChartMode='battery'; let dashChartPeriod='1d';
 
-            files.forEach(file => {
-                let li = document.createElement('li');
-                li.innerHTML = `
-                    <span style="word-break: break-all; margin-right: 10px;">${file.name}</span>
-                    <a href="${file.download_url}" class="download" download>Download</a>
-                `;
-                li.appendChild(li); // Kleine correctie voor weergave
-            });
-            // Hernieuwde weergave logica voor de lijst
-            listEl.innerHTML = "";
-            files.forEach(file => {
-                let li = document.createElement('li');
-                li.innerHTML = `
-                    <span style="word-break: break-all; margin-right: 10px;">${file.name}</span>
-                    <a href="${file.download_url}" class="download" download>Download</a>
-                `;
-                listEl.appendChild(li);
-            });
+ function getEntry(date){
+  const e=db.entries[date];if(!e)return emptyEntry(date);
+  return {...emptyEntry(date),...e,batteryCheckins:e.batteryCheckins||[],dopamineEvents:e.dopamineEvents||[]}
+ }
 
-        } catch (err) {
-            listEl.innerHTML = "<li>Fout bij ophalen van bestanden.</li>";
-        }
+ function persistDB(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(db));return true}catch(e){return false}}
+ function persistDraft(showToast=false){
+  draft.date=selectedDate;db.entries[selectedDate]=clone(draft);
+  const ok=persistDB();
+  if(showToast&&ok)toast('Gegevens opgeslagen.');
+  updateDashboard();
+ }
+
+ let toastTimer=null;function toast(msg){const el=$('toast');if(!el)return;el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600)}
+ function has(v){return v!==null&&v!==undefined&&v!==''}
+ function clamp(n,min,max){return Math.max(min,Math.min(max,n))}
+ function dayLabel(date){const d=new Date(date+'T12:00:00');return d.toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'})}
+ function dateOffset(date,offset){const d=new Date(date+'T12:00:00');d.setDate(d.getDate()+offset);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+
+ function showView(name){
+  activeView=name;
+  ['dashboard','dopamine','entry','history','settings'].forEach(v=>{
+    const el = $( 'view-' + v );
+    const tab = $( 'tab-' + v );
+    if(el) el.classList.toggle('active', v === name);
+    if(tab) tab.classList.toggle('active', v === name);
+  });
+  if(name==='dashboard') updateDashboard();
+  if(name==='entry') syncForm();
+  if(name==='history') renderHistory();
+  if(name==='dopamine'){
+    if($('ev-date')) $('ev-date').value=selectedDate;
+    if($('ev-time')) $('ev-time').value=new Date().toTimeString().slice(0,5);
+    renderDopamineEventsList();
+  }
+ }
+
+ ['dashboard','dopamine','entry','history','settings'].forEach(v=>{
+   const tab = $('tab-' + v);
+   if(tab) tab.addEventListener('click', () => showView(v));
+ });
+ if($('go-entry')) $('go-entry').addEventListener('click', () => showView('entry'));
+ if($('go-dopamine-view')) $('go-dopamine-view').addEventListener('click', () => showView('dopamine'));
+
+ function calcSleepHours(e){
+  if(has(e.bedtime)&&has(e.waketime)){
+   const [h1,m1]=e.bedtime.split(':').map(Number);
+   const [h2,m2]=e.waketime.split(':').map(Number);
+   let diff=(h2*60+m2)-(h1*60+m1);if(diff<=0)diff+=1440;
+   return diff/60;
+  }
+  return 7.25;
+ }
+
+ // Volledige batterijberekening zoals voorheen
+ function calcEntryMetrics(e,date){
+  const sleep=calcSleepHours(e);
+  let bat=68;
+  bat += (sleep - 7.5)*7;
+  if(e.sleepQuality==='poor') bat -= 14;
+  if(e.sleepQuality==='good') bat += 6;
+  if(has(e.workHours)) bat -= Number(e.workHours)*1.8;
+  if(has(e.coffeeCount)) bat -= Math.max(0,Number(e.coffeeCount)-2)*35/10;
+  if(e.smokingCount==='many') bat -= 8;
+  if(e.alcoholCount==='many') bat -= 12;
+  if(has(e.exerciseMins)) bat += Math.min(12,Number(e.exerciseMins)*0.2);
+  if(has(e.bibleMins)) bat += Math.min(6,Number(e.bibleMins)*0.1);
+  if(has(e.prayerMins)) bat += Math.min(5,Number(e.prayerMins)*0.1);
+  if(e.showerType==='cold') bat += 6;
+
+  const checkins = e.batteryCheckins||[];
+  let selfVal = null;
+  if(checkins.length>0){
+   const sum = checkins.reduce((acc,c)=>acc+Number(c.level),0);
+   selfVal = Math.round(sum/checkins.length);
+  } else if(has(e.selfBattery)){
+   selfVal = clamp(Number(e.selfBattery),0,100);
+  }
+
+  const finalBat = selfVal!==null ? Math.round(bat*0.45 + selfVal*0.55) : Math.round(clamp(bat,10,100));
+
+  let baseD = 0;
+  if(e.sleepQuality==='good') baseD += 1.5;
+  if(e.sleepQuality==='poor') baseD -= 3.0;
+  if(sleep < 5.5) baseD -= 4.0;
+
+  const events = e.dopamineEvents||[];
+  events.forEach(ev=>{
+   const def = EVENT_DEFS[ev.type];
+   if(def) baseD += def.baselineShift;
+  });
+
+  return { battery: clamp(finalBat,5,100), selfBattery: selfVal, baseD: Math.round(baseD*10)/10, sleepHours: Math.round(sleep*10)/10 };
+ }
+
+ // Reële Dopamine Curve Berekening (inclusief Upper -> Downer)
+ function getDopamineAtTime(date, minuteOfDay){
+  const e = getEntry(date);
+  const metrics = calcEntryMetrics(e,date);
+  let dVal = metrics.baseD;
+
+  const events = e.dopamineEvents||[];
+  events.forEach(ev=>{
+   const [h,m] = ev.time.split(':').map(Number);
+   const evMin = h*60+m;
+   const def = EVENT_DEFS[ev.type];
+   if(!def) return;
+
+   const diff = minuteOfDay - evMin;
+   if(diff >= 0){
+    if(diff <= def.peakDuration){
+     // Upper Piek Fase
+     const progress = diff / def.peakDuration;
+     dVal += def.upper * (1 - Math.pow(progress, 1.5));
+    } else if(def.crash < 0 && diff <= (def.peakDuration + def.crashDuration)){
+     // Downer / Crash Fase
+     const crashDiff = diff - def.peakDuration;
+     const crashProgress = crashDiff / def.crashDuration;
+     const crashDepth = def.crash * Math.sin(crashProgress * Math.PI);
+     dVal += crashDepth;
     }
+   }
+  });
 
-    loadFiles();
+  return Math.round(dVal * 10) / 10;
+ }
+
+ function updateDashboard(){
+  const calc = calcEntryMetrics(draft,selectedDate);
+  if($('battery-fill')){
+    $('battery-fill').style.width = calc.battery+'%';
+    $('battery-fill').className = 'battery-fill '+(calc.battery<30?'red':calc.battery<60?'amber':'');
+  }
+  if($('battery-value')) $('battery-value').textContent = calc.battery+'%';
+  if($('battery-status')) $('battery-status').textContent = '● '+(calc.battery<30?'Kwetsbare besliszone':calc.battery<60?'Waarschuwingszone':'Veilige zone');
+  
+  if($('self-battery')) $('self-battery').textContent = calc.selfBattery!==null ? calc.selfBattery+'%' : '—';
+  if($('d-baseline-display')) $('d-baseline-display').textContent = (calc.baseD>=0?'+':'')+calc.baseD+'d';
+  
+  const now = new Date();
+  const nowMins = now.getHours()*60 + now.getMinutes();
+  const currentD = getDopamineAtTime(selectedDate, nowMins);
+  if($('d-current-display')) $('d-current-display').textContent = (currentD>=0?'+':'')+currentD+'d';
+
+  let sum=0, cnt=0;
+  for(let i=0;i<14;i++){
+   const d=dateOffset(selectedDate,-i);
+   sum += calcEntryMetrics(getEntry(d),d).battery;
+   cnt++;
+  }
+  if($('trend-average')) $('trend-average').textContent = Math.round(sum/cnt)+'%';
+
+  renderMomentList();
+  renderDopamineEventsList();
+  renderDashboardMainChart();
+ }
+
+ function renderMomentList(){
+  const box=$('moment-log-list');if(!box)return;
+  const checkins=draft.batteryCheckins||[];
+  if(!checkins.length){box.innerHTML='<p class="small-muted">Nog geen gevoelsmetingen gelogd vandaag.</p>';return}
+  box.innerHTML=checkins.map(x=>'<div class="moment-item"><span class="moment-time">'+x.time+'</span><strong class="moment-score" style="color:'+(x.level<30?'var(--red)':x.level<60?'var(--amber)':'var(--green)')+'">'+x.level+'%</strong><span class="moment-note">'+(x.note||'Gevoelsmeting')+'</span><button type="button" class="moment-delete" data-delete-moment="'+x.id+'">×</button></div>').join('');
+  
+  box.querySelectorAll('[data-delete-moment]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.deleteMoment;
+      draft.batteryCheckins = (draft.batteryCheckins||[]).filter(x=>x.id!==id);
+      persistDraft();
+    });
+  });
+ }
+
+ if($('moment-form')){
+   $('moment-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    const time=$('moment-time').value, level=Number($('moment-level').value), note=$('moment-note').value.trim();
+    if(!time||isNaN(level))return;
+    draft.batteryCheckins=draft.batteryCheckins||[];
+    draft.batteryCheckins.push({id:Date.now()+'',time,level,note});
+    draft.selfBattery = level;
+    persistDraft(true);
+    $('moment-level').value='';$('moment-note').value='';
+   });
+ }
+
+ function renderDopamineEventsList(){
+  const box=$('dopamine-events-list');if(!box)return;
+  const events=draft.dopamineEvents||[];
+  if(!events.length){box.innerHTML='<p class="small-muted">Nog geen dopamine events gelogd vandaag.</p>';return}
+  box.innerHTML=events.map(ev=>{
+   const def=EVENT_DEFS[ev.type]||{label:ev.type,upper:5,type:'neutral'};
+   return '<div class="event-item"><span class="ev-time">'+ev.time+'</span><span class="ev-title">'+def.label+(ev.note?' ('+ev.note+')':'')+'</span><span class="ev-d '+(def.type==='bad'?'minus':'plus')+'">'+(def.upper>=0?'+':'')+def.upper+'d '+(def.crash?'(➔ '+def.crash+'d downer)':'')+'</span><button type="button" class="ev-delete" data-delete-dopamine="'+ev.id+'">×</button></div>';
+  }).join('');
+
+  box.querySelectorAll('[data-delete-dopamine]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.deleteDopamine;
+      draft.dopamineEvents = (draft.dopamineEvents||[]).filter(x=>x.id!==id);
+      persistDraft();
+    });
+  });
+ }
+
+ document.querySelectorAll('[data-quick]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+   const type = btn.dataset.quick;
+   const now = new Date();
+   const time = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+   draft.dopamineEvents = draft.dopamineEvents||[];
+   draft.dopamineEvents.push({id:Date.now()+'',date:selectedDate,time,type,amount:'medium'});
+   persistDraft(true);
+   toast('Event gelogd om '+time);
+  });
+ });
+
+ if($('dopamine-event-form')){
+   $('dopamine-event-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    const date=$('ev-date').value, time=$('ev-time').value, type=$('ev-type').value;
+    const amount=$('ev-amount').value, duration=$('ev-duration').value, note=$('ev-note').value.trim();
+    if(!date||!time||!type)return;
+
+    const targetEntry = date===selectedDate ? draft : getEntry(date);
+    targetEntry.dopamineEvents = targetEntry.dopamineEvents||[];
+    targetEntry.dopamineEvents.push({id:Date.now()+'',date,time,type,amount,duration,note});
+    db.entries[date] = targetEntry;
+    persistDB();
+    if(date===selectedDate) draft = targetEntry;
+    updateDashboard();
+    toast('Dopamine event gelogd voor '+date+' '+time);
+   });
+ }
+
+ function renderDashboardMainChart(){
+  const svg=$('dashboard-main-chart');if(!svg)return;
+  const isDop = dashChartMode==='dopamine';
+  const W=900,H=280,L=50,R=20,T=20,B=40,plotW=W-L-R,plotH=H-T-B;
+
+  let pts = [];
+  if(isDop){
+   for(let m=0; m<=1440; m+=15){
+    pts.push({x: m, y: getDopamineAtTime(selectedDate, m)});
+   }
+  } else {
+   const calc = calcEntryMetrics(draft,selectedDate);
+   pts.push({x:0, y: calc.battery});
+   (draft.batteryCheckins||[]).forEach(c=>{
+    const [h,m]=c.time.split(':').map(Number);
+    pts.push({x: h*60+m, y: Number(c.level)});
+   });
+   pts.push({x:1440, y: calc.battery});
+  }
+
+  const minY = isDop ? -35 : 0;
+  const maxY = isDop ? 55 : 100;
+  const mapX = p => L + (p.x/1440)*plotW;
+  const mapY = v => T + ((maxY - clamp(v,minY,maxY))/(maxY - minY))*plotH;
+
+  let dPath = pts.map((p,i)=>(i===0?'M':'L')+' '+mapX(p)+' '+mapY(p.y)).join(' ');
+  
+  let parts = [
+   `<rect x="${L}" y="${T}" width="${plotW}" height="${plotH}" fill="#fafbf8" stroke="#dfe5dd"/>`,
+   `<line x1="${L}" y1="${mapY(0)}" x2="${W-R}" y2="${mapY(0)}" stroke="${isDop?'#697873':'#dfe5dd'}" stroke-dasharray="4 4"/>`,
+   `<path d="${dPath}" fill="none" stroke="${isDop?'#6b4c9a':'#2e8b69'}" stroke-width="3"/>`
+  ];
+
+  if(!isDop){
+   pts.forEach(p=>{
+    parts.push(`<circle cx="${mapX(p)}" cy="${mapY(p.y)}" r="4" fill="#2e8b69"/>`);
+   });
+  }
+
+  svg.innerHTML = parts.join('');
+  if($('dashboard-chart-summary')) $('dashboard-chart-summary').textContent = isDop ? 'Reële Dopamine Curve (in d) — Berekend met Piek, Downer & Herstel' : 'Batterij Grafiek (%) — Dagverloop & Gevoelsmetingen';
+ }
+
+ if($('dash-chart-mode-bat')){
+   $('dash-chart-mode-bat').addEventListener('click', ()=>{
+    dashChartMode='battery';
+    $('dash-chart-mode-bat').classList.add('active');
+    if($('dash-chart-mode-dop')) $('dash-chart-mode-dop').classList.remove('active');
+    renderDashboardMainChart();
+   });
+ }
+
+ if($('dash-chart-mode-dop')){
+   $('dash-chart-mode-dop').addEventListener('click', ()=>{
+    dashChartMode='dopamine';
+    $('dash-chart-mode-dop').classList.add('active');
+    if($('dash-chart-mode-bat')) $('dash-chart-mode-bat').classList.remove('active');
+    renderDashboardMainChart();
+   });
+ }
+
+ document.querySelectorAll('[data-dash-period]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+   document.querySelectorAll('[data-dash-period]').forEach(b=>b.setAttribute('aria-pressed','false'));
+   btn.setAttribute('aria-pressed','true');
+   dashChartPeriod = btn.dataset.dashPeriod;
+   renderDashboardMainChart();
+  });
+ });
+
+ function syncForm(){
+  document.querySelectorAll('.tracker-input').forEach(el=>{
+   const f=el.dataset.field;if(f&&has(draft[f]))el.value=draft[f];
+  });
+ }
+
+ document.querySelectorAll('.tracker-input').forEach(el=>{
+  el.addEventListener('change', ()=>{
+   const f=el.dataset.field;if(f){draft[f]=el.value;persistDraft();}
+  });
+ });
+
+ if($('entry-form')){
+   $('entry-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    persistDraft(true);
+    showView('dashboard');
+   });
+ }
+
+ if($('selectedDate')){
+   $('selectedDate').value=selectedDate;
+   $('selectedDate').addEventListener('change',e=>{
+    selectedDate=e.target.value;draft=getEntry(selectedDate);syncForm();updateDashboard();
+   });
+ }
+
+ function renderHistory(){
+  const list=$('history-list');if(!list)return;
+  const dates=Object.keys(db.entries).sort().reverse();
+  if(!dates.length){list.innerHTML='<p class="small-muted">Nog geen opgeslagen dagen.</p>';return}
+  list.innerHTML=dates.map(d=>{
+   const m=calcEntryMetrics(db.entries[d],d);
+   return '<div class="history-item"><div><h4>'+dayLabel(d)+'</h4><p>Batterij: '+m.battery+'% | Dopamine Baseline: '+(m.baseD>=0?'+':'')+m.baseD+'d</p></div><button class="btn btn-outline btn-small" data-load-date="'+d+'">Bekijken</button></div>';
+  }).join('');
+
+  list.querySelectorAll('[data-load-date]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const d = btn.dataset.loadDate;
+      selectedDate=d;if($('selectedDate')) $('selectedDate').value=d;draft=getEntry(d);syncForm();showView('entry');
+    });
+  });
+ }
+
+ if($('export-json')){
+   $('export-json').addEventListener('click',()=>{
+    const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='energietracker-backup-'+today()+'.json';a.click();
+    toast('JSON Back-up geëxporteerd.');
+   });
+ }
+
+ if($('import-json')){
+   $('import-json').addEventListener('change',e=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=evt=>{
+     try{
+      db=JSON.parse(evt.target.result);persistDB();
+      draft=getEntry(selectedDate);syncForm();updateDashboard();
+      toast('Back-up succesvol geïmporteerd!');
+     }catch(err){toast('Ongeldig JSON bestand.')}
+    };
+    reader.readAsText(file);
+   });
+ }
+
+ if($('delete-all')){
+   $('delete-all').addEventListener('click',()=>{
+    if(confirm('Weet je zeker dat je alle gegevens wilt wissen?')){
+     localStorage.removeItem(STORAGE_KEY);db=freshDB();draft=emptyEntry(selectedDate);
+     syncForm();updateDashboard();toast('Alle gegevens gewist.');
+    }
+   });
+ }
+
+ syncForm();
+ updateDashboard();
+})();
 </script>
-
 </body>
 </html>
